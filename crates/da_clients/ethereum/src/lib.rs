@@ -13,10 +13,7 @@ use alloy::transports::http::Http;
 use async_trait::async_trait;
 
 use color_eyre::Result;
-// use reqwest::async_impl::client::Client;
 use reqwest::Client;
-use starknet::core::types::FieldElement;
-use starknet::core::types::FromByteArrayError;
 use std::str::FromStr;
 use url::Url;
 

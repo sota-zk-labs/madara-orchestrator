@@ -2,18 +2,17 @@ use crate::config::Config;
 use crate::jobs::types::{JobItem, JobStatus, JobType, JobVerificationStatus};
 use crate::jobs::Job;
 use async_trait::async_trait;
-use axum::routing::get;
 use color_eyre::eyre::{eyre, Ok};
 use color_eyre::Result;
 use lazy_static::lazy_static;
 use num_bigint::{BigUint, ToBigUint};
 use num_traits::Num;
-use num_traits::{One, Zero};
+use num_traits::{Zero};
 use std::ops::{Add, Mul, Rem};
 use std::result::Result::{Err, Ok as OtherOk};
 use std::str::FromStr;
 
-use starknet::core::types::{BlockId, FieldElement, MaybePendingStateUpdate, StateDiff, StateUpdate, StorageEntry};
+use starknet::core::types::{BlockId, FieldElement, MaybePendingStateUpdate, StateUpdate, StorageEntry};
 use starknet::providers::Provider;
 use std::collections::HashMap;
 use tracing::log;
@@ -225,7 +224,7 @@ async fn state_update_to_blob_data(
 
         // @note: if nonce is null and there is some len of writes, make an api call to get the contract nonce for the block
 
-        if (nonce.is_none() && writes.len() > 0 && addr != FieldElement::ONE) {
+        if nonce.is_none() && writes.len() > 0 && addr != FieldElement::ONE {
             let get_current_nonce_result = config.starknet_client().get_nonce(BlockId::Number(block_no), addr).await;
 
             nonce = match get_current_nonce_result {
@@ -242,7 +241,7 @@ async fn state_update_to_blob_data(
         //        block number and hash
         // @note: ONE special address can be used to mark the range of block, if in future
         //        the team wants to submit multiple blocks in a sinle blob etc.
-        if (addr == FieldElement::ONE && da_word == FieldElement::ONE) {
+        if addr == FieldElement::ONE && da_word == FieldElement::ONE {
             continue;
         }
         blob_data.push(addr);
@@ -276,7 +275,7 @@ fn da_word(class_flag: bool, nonce_change: Option<FieldElement>, num_changes: u6
     let mut binary_string = "0".repeat(127);
 
     // class flag of one bit
-    if (class_flag) {
+    if class_flag {
         binary_string += "1"
     } else {
         binary_string += "0"
@@ -290,7 +289,7 @@ fn da_word(class_flag: bool, nonce_change: Option<FieldElement>, num_changes: u6
         let padded_binary_string = format!("{:0>64}", binary_string_local);
         binary_string += &padded_binary_string;
     } else {
-        let mut binary_string_local = "0".repeat(64);
+        let binary_string_local = "0".repeat(64);
         binary_string += &binary_string_local;
     }
 

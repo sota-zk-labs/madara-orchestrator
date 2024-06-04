@@ -4,7 +4,7 @@ members = [
   "crates/orchestrator",
   "crates/da_clients/da-client-interface",
   "crates/da_clients/ethereum",
-  "crates/utils",
+  "crates/utils", "crates/da_clients/aptos",
 ]
 
 [workspace.package]
@@ -15,7 +15,6 @@ authors = ["Apoorv Sadana <@apoorvsadana>"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [workspace.dependencies]
-
 
 num = { version = "0.4.1" }
 ethereum-da-client = { path = "crates/da_clients/ethereum" }
@@ -43,3 +42,8 @@ httpmock = { version = "0.7.0" }
 utils = { path = "crates/utils" }
 num-traits = "0.2"
 lazy_static = "1.4.0"
+aptos-sdk = { git = "https://github.com/Tranduy1dol/aptos-core", branch="zeroize_v1.7" }
+
+[patch.crates-io]
+merlin = { git = "https://github.com/aptos-labs/merlin", branch = "main"}
+x25519-dalek = { git = "https://github.com/Tranduy1dol/x25519-dalek", branch = "zeroize_v1.7" }
