@@ -44,6 +44,7 @@ num-traits = "0.2"
 lazy_static = "1.4.0"
 aptos-sdk = { git = "https://github.com/Tranduy1dol/aptos-core", branch="zeroize_v1.7" }
 
+
 [patch.crates-io]
 merlin = { git = "https://github.com/aptos-labs/merlin", branch = "main"}
 x25519-dalek = { git = "https://github.com/Tranduy1dol/x25519-dalek", branch = "zeroize_v1.7" }

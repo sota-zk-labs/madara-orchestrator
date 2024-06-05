@@ -9,6 +9,7 @@ color-eyre = "0.6.3"
 dotenv = "0.15.0"
 c-kzg = "1.0.2"
 
+serde = { workspace = true }
 da-client-interface = { workspace = true }
 async-trait = { workspace = true}
 utils = { workspace = true }

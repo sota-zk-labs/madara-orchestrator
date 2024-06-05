@@ -598,6 +598,7 @@ dependencies = [
  "color-eyre",
  "da-client-interface",
  "dotenv",
+ "serde",
  "url",
  "utils",
 ]
