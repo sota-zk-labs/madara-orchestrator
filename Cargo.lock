@@ -588,22 +588,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0952808a6c2afd1aa8947271f3a60f1a6763c7b912d210184c5149b5cf147247"
 
 [[package]]
-name = "aptos"
-version = "0.1.0"
-dependencies = [
- "alloy",
- "aptos-sdk",
- "async-trait",
- "c-kzg",
- "color-eyre",
- "da-client-interface",
- "dotenv",
- "serde",
- "url",
- "utils",
-]
-
-[[package]]
 name = "aptos-aggregator"
 version = "0.1.0"
 source = "git+https://github.com/Tranduy1dol/aptos-core?branch=zeroize_v1.7#330205d2e46d99b912a17f8917f5c17fcfdbce75"
@@ -817,6 +801,22 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 1.0.109",
+]
+
+[[package]]
+name = "aptos-da-client"
+version = "0.1.0"
+dependencies = [
+ "alloy",
+ "aptos-sdk",
+ "async-trait",
+ "c-kzg",
+ "color-eyre",
+ "da-client-interface",
+ "dotenv",
+ "serde",
+ "url",
+ "utils",
 ]
 
 [[package]]
@@ -7466,6 +7466,7 @@ dependencies = [
 name = "orchestrator"
 version = "0.1.0"
 dependencies = [
+ "aptos-da-client",
  "async-trait",
  "axum 0.7.5",
  "axum-macros",

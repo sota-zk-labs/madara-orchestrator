@@ -18,6 +18,7 @@ authors = ["Apoorv Sadana <@apoorvsadana>"]
 
 num = { version = "0.4.1" }
 ethereum-da-client = { path = "crates/da_clients/ethereum" }
+aptos-da-client = { path = "crates/da_clients/aptos" }
 async-trait = { version = "0.1.77" }
 da-client-interface = { path = "crates/da_clients/da-client-interface" }
 axum = { version = "0.7.4" }

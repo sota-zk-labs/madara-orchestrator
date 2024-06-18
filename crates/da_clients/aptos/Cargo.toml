@@ -1,5 +1,5 @@
 [package]
-name = "aptos"
+name = "aptos-da-client"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
