@@ -1796,9 +1796,12 @@ dependencies = [
  "aptos-sdk",
  "async-trait",
  "color-eyre",
+ "dotenvy",
+ "hex",
  "mockall",
  "once_cell",
  "settlement-client-interface",
+ "tokio",
  "url",
  "utils",
 ]
