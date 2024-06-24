@@ -19,4 +19,4 @@ jobs:
 
       - name: Build the project
         run: |
-          cargo build --release --workspace
+          RUSTFLAGS=["--cfg", tokio_unstable]  cargo build --release --workspace
