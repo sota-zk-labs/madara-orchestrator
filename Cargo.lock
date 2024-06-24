@@ -807,7 +807,6 @@ dependencies = [
 name = "aptos-da-client"
 version = "0.1.0"
 dependencies = [
- "alloy",
  "aptos-sdk",
  "async-trait",
  "c-kzg",

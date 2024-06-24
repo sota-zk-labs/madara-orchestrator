@@ -1,13 +1,15 @@
 #![allow(missing_docs)]
 #![allow(clippy::missing_docs_in_private_items)]
 use std::str::FromStr;
-use aptos_sdk::rest_client::Client;
+use aptos_sdk::rest_client::{Client, Transaction};
 use aptos_sdk::transaction_builder::TransactionBuilder;
 use aptos_sdk::types::chain_id::ChainId;
 use aptos_sdk::types::LocalAccount;
 use aptos_sdk::types::transaction::{SignedTransaction, TransactionPayload, EntryFunction};
 use async_trait::async_trait;
 use alloy::primitives::FixedBytes;
+use aptos_sdk::crypto::HashValue;
+use aptos_sdk::move_types::account_address::AccountAddress;
 use aptos_sdk::move_types::identifier::Identifier;
 use aptos_sdk::move_types::language_storage::ModuleId;
 use aptos_sdk::move_types::u256;
@@ -17,30 +19,32 @@ use serde::{ Serialize, Deserialize};
 use da_client_interface::{DaClient, DaVerificationStatus};
 use dotenv::dotenv;
 use crate::config::AptosDaConfig;
+use crate::conversion::{vec_fixed_bytes_131072_to_hex_string, vec_fixed_bytes_48_to_hex_string};
 
 pub mod config;
-mod config;
+pub mod conversion;
 
 pub struct AptosDaClient {
     #[allow(dead_code)]
     client: Client,
-    wallet: LocalAccount,
+    account: LocalAccount,
+    module_address: AccountAddress,
     trusted_setup: KzgSettings,
 }
 
 #[async_trait]
 impl DaClient for AptosDaClient {
-    async fn publish_state_diff(&self, state_diff: Vec<Vec<u8>>) -> color_eyre::Result<String> {
+    async fn publish_state_diff(&self, state_diff: Vec<Vec<u8>>, to: &[u8; 32]) -> color_eyre::Result<String> {
         dotenv().ok();
         let client = &self.client;
-        let wallet = &self.wallet;
+        let account = &self.account;
 
         let (blobs, commitments, proofs) = prepare_blob(&state_diff, &self.trusted_setup).await?;
 
         let payload = TransactionPayload::EntryFunction(
             EntryFunction::new(
                 ModuleId::new(
-                    wallet.address(),
+                    account.address(),
                     Identifier::new("starknet").unwrap()
                 ),
                 Identifier::new("update_state").unwrap(),
@@ -57,14 +61,14 @@ impl DaClient for AptosDaClient {
 
         // Build transaction.
         let txn = TransactionBuilder::new(payload, 0, ChainId::test())
-            .sender(wallet.address())
+            .sender(account.address())
             .sequence_number(1)
             .max_gas_amount(10000000)
             .gas_unit_price(1)
             .build();
 
         // Sign transaction.
-        let signed_txn: SignedTransaction = wallet.sign_transaction(txn);
+        let signed_txn: SignedTransaction = account.sign_transaction(txn);
 
         // Submit transaction.
         client.submit(&signed_txn).await?;
@@ -73,7 +77,23 @@ impl DaClient for AptosDaClient {
     }
 
     async fn verify_inclusion(&self, external_id: &str) -> color_eyre::Result<DaVerificationStatus> {
-        todo!()
+        let client = &self.client;
+        let txn = client.get_transaction_by_hash(HashValue::from_str(external_id).unwrap()).await?;
+        match txn.into_inner().success() {
+            true => {
+                Ok(DaVerificationStatus::Verified)
+            }
+            false => {
+                match txn.clone().into_inner().is_pending() {
+                    true => {
+                        Ok(DaVerificationStatus::Pending)
+                    }
+                    false => {
+                        Ok(DaVerificationStatus::Rejected)
+                    }
+                }
+            }
+        }
     }
 
     async fn max_blob_per_txn(&self) -> u64 {
@@ -91,16 +111,6 @@ impl From<AptosDaConfig> for AptosDaClient {
     fn from(config: AptosDaConfig) -> Self {
         todo!()
     }
-}
-
-fn vec_fixed_bytes_48_to_hex_string(data: &Vec<FixedBytes<48>>) -> String {
-    let hex_chars: Vec<String> = data.iter().map(|byte| format!("{:02X}", byte)).collect();
-    hex_chars.join("")
-}
-
-fn vec_fixed_bytes_131072_to_hex_string(data: &Vec<FixedBytes<131072>>) -> String {
-    let hex_chars: Vec<String> = data.iter().map(|byte| format!("{:02X}", byte)).collect();
-    hex_chars.join("")
 }
 
 async fn prepare_blob(
