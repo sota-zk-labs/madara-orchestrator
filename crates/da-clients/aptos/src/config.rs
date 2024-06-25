@@ -1,7 +1,7 @@
-use std::str::FromStr;
 use aptos_sdk::crypto::_once_cell::sync::Lazy;
-use url::Url;
 use da_client_interface::DaConfig;
+use std::str::FromStr;
+use url::Url;
 use utils::env_utils::get_env_var_or_panic;
 
 #[derive(Clone, Debug)]
@@ -20,13 +20,13 @@ impl DaConfig for AptosDaConfig {
                     .map(|s| s.as_str())
                     .unwrap_or("https://fullnode.devnet.aptoslabs.com"),
             )
-                .unwrap()
+            .unwrap()
         });
 
         Self {
             node_url: NODE_URL.to_string(),
             private_key: get_env_var_or_panic("PRIVATE_KEY"),
-            account_address: get_env_var_or_panic("ADDRESS")
+            account_address: get_env_var_or_panic("ADDRESS"),
         }
     }
 }
