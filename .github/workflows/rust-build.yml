@@ -19,4 +19,5 @@ jobs:
 
       - name: Build the project
         run: |
-          RUSTFLAGS=["--cfg", tokio_unstable]  cargo build --release --workspace
+          sudo apt install build-essential cmake pkg-config libudev-dev
+          RUSTFLAGS="--cfg tokio_unstable"  cargo build --release --workspace

@@ -26,7 +26,8 @@ jobs:
 
       - name: Run llvm-cov
         run: |
-          cargo llvm-cov nextest --release --lcov --output-path lcov.info --test-threads=1
+          sudo apt install build-essential cmake pkg-config libudev-dev
+          RUSTFLAGS="--cfg tokio_unstable" cargo llvm-cov nextest --release --lcov --output-path lcov.info --test-threads=1
 
       - name: Upload coverage to codecov.io
         uses: codecov/codecov-action@v3

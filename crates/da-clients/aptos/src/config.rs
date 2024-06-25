@@ -23,17 +23,8 @@ impl DaConfig for AptosDaConfig {
                 .unwrap()
         });
 
-        static FAUCET_URL: Lazy<Url> = Lazy::new(|| {
-            Url::from_str(
-                std::env::var("APTOS_FAUCET_URL")
-                    .as_ref()
-                    .map(|s| s.as_str())
-                    .unwrap_or("https://faucet.devnet.aptoslabs.com"),
-            )
-                .unwrap()
-        });
         Self {
-            node_url: get_env_var_or_panic("APTOS_NODE_URL"),
+            node_url: NODE_URL.to_string(),
             private_key: get_env_var_or_panic("PRIVATE_KEY"),
             account_address: get_env_var_or_panic("ADDRESS")
         }

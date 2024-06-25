@@ -1,7 +1,10 @@
 #![allow(missing_docs)]
 #![allow(clippy::missing_docs_in_private_items)]
+
+use std::path::Path;
 use std::str::FromStr;
-use aptos_sdk::rest_client::{Client, Transaction};
+use std::time::{SystemTime, UNIX_EPOCH};
+use aptos_sdk::rest_client::{Client};
 use aptos_sdk::transaction_builder::TransactionBuilder;
 use aptos_sdk::types::chain_id::ChainId;
 use aptos_sdk::types::LocalAccount;
@@ -9,13 +12,11 @@ use aptos_sdk::types::transaction::{SignedTransaction, TransactionPayload, Entry
 use async_trait::async_trait;
 use alloy::primitives::FixedBytes;
 use aptos_sdk::crypto::HashValue;
-use aptos_sdk::move_types::account_address::AccountAddress;
 use aptos_sdk::move_types::identifier::Identifier;
 use aptos_sdk::move_types::language_storage::ModuleId;
 use aptos_sdk::move_types::u256;
 use aptos_sdk::move_types::value::{MoveValue, serialize_values};
 use c_kzg::{Blob, BYTES_PER_BLOB, KzgCommitment, KzgProof, KzgSettings};
-use serde::{ Serialize, Deserialize};
 use da_client_interface::{DaClient, DaVerificationStatus};
 use dotenv::dotenv;
 use crate::config::AptosDaConfig;
@@ -28,13 +29,12 @@ pub struct AptosDaClient {
     #[allow(dead_code)]
     client: Client,
     account: LocalAccount,
-    module_address: AccountAddress,
     trusted_setup: KzgSettings,
 }
 
 #[async_trait]
 impl DaClient for AptosDaClient {
-    async fn publish_state_diff(&self, state_diff: Vec<Vec<u8>>, to: &[u8; 32]) -> color_eyre::Result<String> {
+    async fn publish_state_diff(&self, state_diff: Vec<Vec<u8>>, _to: &[u8; 32]) -> color_eyre::Result<String> {
         dotenv().ok();
         let client = &self.client;
         let account = &self.account;
@@ -60,7 +60,13 @@ impl DaClient for AptosDaClient {
         );
 
         // Build transaction.
-        let txn = TransactionBuilder::new(payload, 0, ChainId::test())
+        let txn = TransactionBuilder::new(
+            payload,
+            SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_secs(),
+            ChainId::test())
             .sender(account.address())
             .sequence_number(1)
             .max_gas_amount(10000000)
@@ -79,12 +85,13 @@ impl DaClient for AptosDaClient {
     async fn verify_inclusion(&self, external_id: &str) -> color_eyre::Result<DaVerificationStatus> {
         let client = &self.client;
         let txn = client.get_transaction_by_hash(HashValue::from_str(external_id).unwrap()).await?;
-        match txn.into_inner().success() {
+        let response = txn.into_inner();
+        match response.success() {
             true => {
                 Ok(DaVerificationStatus::Verified)
             }
             false => {
-                match txn.clone().into_inner().is_pending() {
+                match response.is_pending() {
                     true => {
                         Ok(DaVerificationStatus::Pending)
                     }
@@ -109,7 +116,13 @@ impl DaClient for AptosDaClient {
 
 impl From<AptosDaConfig> for AptosDaClient {
     fn from(config: AptosDaConfig) -> Self {
-        todo!()
+        let client = Client::new(config.node_url.parse().unwrap());
+        let private_key = config.private_key.parse()?;
+        let account_address = config.account_address.parse()?;
+        let account = LocalAccount::new(account_address, private_key, 0);
+        let trusted_setup = KzgSettings::load_trusted_setup_file(Path::new("./trusted_setup.txt"))
+            .expect("Issue while loading the trusted setup");
+        AptosDaClient { client, account, trusted_setup}
     }
 }
 
