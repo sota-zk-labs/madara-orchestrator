@@ -10,6 +10,8 @@ use sharp_service::SharpProverService;
 use starknet::providers::jsonrpc::HttpTransport;
 use starknet::providers::{JsonRpcClient, Url};
 use tokio::sync::OnceCell;
+use aptos_da_client::AptosDaClient;
+use aptos_da_client::config::AptosDaConfig;
 use utils::env_utils::get_env_var_or_panic;
 use utils::settings::default::DefaultSettingsProvider;
 use utils::settings::SettingsProvider;

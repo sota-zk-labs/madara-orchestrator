@@ -8,6 +8,7 @@ color-eyre = "0.6.3"
 dotenv = "0.15.0"
 c-kzg = "1.0.2"
 url = "2.5.0"
+alloy = { git = "https://github.com/alloy-rs/alloy", rev = "68952c0"}
 
 serde = { workspace = true }
 da-client-interface = { workspace = true }
