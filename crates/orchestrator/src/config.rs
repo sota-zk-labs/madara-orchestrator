@@ -1,5 +1,7 @@
 use std::sync::Arc;
 
+use aptos_da_client::config::AptosDaConfig;
+use aptos_da_client::AptosDaClient;
 use arc_swap::{ArcSwap, Guard};
 use da_client_interface::{DaClient, DaConfig};
 use dotenvy::dotenv;
@@ -127,6 +129,10 @@ fn build_da_client() -> Box<dyn DaClient + Send + Sync> {
         "ethereum" => {
             let config = EthereumDaConfig::new_from_env();
             Box::new(EthereumDaClient::from(config))
+        }
+        "aptos" => {
+            let config = AptosDaConfig::new_from_env();
+            Box::new(AptosDaClient::from(config))
         }
         _ => panic!("Unsupported DA layer"),
     }

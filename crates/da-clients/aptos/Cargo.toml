@@ -1,0 +1,16 @@
+[package]
+name = "aptos-da-client"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+alloy = { workspace = true }
+aptos-sdk = { workspace = true }
+async-trait = { workspace = true }
+c-kzg = { workspace = true }
+color-eyre = { workspace = true }
+da-client-interface = { workspace = true }
+dotenv = { workspace = true }
+serde = { workspace = true }
+url = { workspace = true }
+utils = { workspace = true }

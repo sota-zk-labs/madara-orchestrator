@@ -4,6 +4,7 @@ members = [
   "crates/orchestrator",
   "crates/da-clients/da-client-interface",
   "crates/da-clients/ethereum",
+  "crates/da-clients/aptos",
   "crates/prover-services/prover-client-interface",
   "crates/prover-services/gps-fact-checker",
   "crates/prover-services/sharp-service",
@@ -55,6 +56,9 @@ hex = "0.4"
 itertools = "0.13.0"
 mockall = "0.12.1"
 testcontainers = "0.18.0"
+dotenv = "0.15.0"
+c-kzg = "1.0.2"
+aptos-sdk = { git = "https://github.com/sota-zk-labs/aptos-core" }
 
 # Cairo VM
 cairo-vm = { git = "https://github.com/lambdaclass/cairo-vm", features = [
@@ -72,8 +76,14 @@ madara-prover-rpc-client = { git = "https://github.com/Moonsong-Labs/madara-prov
 # Project
 da-client-interface = { path = "crates/da-clients/da-client-interface" }
 ethereum-da-client = { path = "crates/da-clients/ethereum" }
+aptos-da-client = { path = "crates/da-clients/aptos" }
 utils = { path = "crates/utils" }
 prover-client-interface = { path = "crates/prover-services/prover-client-interface" }
 gps-fact-checker = { path = "crates/prover-services/gps-fact-checker" }
 sharp-service = { path = "crates/prover-services/sharp-service" }
 orchestrator = { path = "crates/orchestrator" }
+
+
+[patch.crates-io]
+merlin = { git = "https://github.com/aptos-labs/merlin" }
+x25519-dalek = { git = "https://github.com/Tranduy1dol/x25519-dalek", branch = "zeroize_v1.7" }
