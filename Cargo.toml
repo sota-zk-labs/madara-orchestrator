@@ -56,6 +56,8 @@ hex = "0.4"
 itertools = "0.13.0"
 mockall = "0.12.1"
 testcontainers = "0.18.0"
+dotenv = "0.15.0"
+c-kzg = "1.0.2"
 aptos-sdk = { git = "https://github.com/sota-zk-labs/aptos-core" }
 
 # Cairo VM
