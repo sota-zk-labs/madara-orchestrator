@@ -4,14 +4,13 @@ version.workspace = true
 edition.workspace = true
 
 [dependencies]
-alloy = { git = "https://github.com/alloy-rs/alloy", rev = "68952c0" }
-c-kzg = "1.0.2"
-color-eyre = "0.6.3"
-dotenv = "0.15.0"
-url = "2.5.0"
-
+alloy = { workspace = true }
 aptos-sdk = { workspace = true }
 async-trait = { workspace = true }
+c-kzg = { workspace = true }
+color-eyre = { workspace = true }
 da-client-interface = { workspace = true }
+dotenv = { workspace = true }
 serde = { workspace = true }
+url = { workspace = true }
 utils = { workspace = true }
