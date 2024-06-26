@@ -1,0 +1,15 @@
+[package]
+name = "avail-da-client"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+
+[dependencies]
+async-trait = { workspace = true }
+avail-subxt = { workspace = true }
+color-eyre = { workspace = true }
+da-client-interface = { workspace = true }
+mockall = { workspace = true }
+serde = { workspace = true }
+subxt = { workspace = true }
+utils = { workspace = true }
