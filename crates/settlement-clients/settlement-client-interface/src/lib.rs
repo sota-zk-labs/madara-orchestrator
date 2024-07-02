@@ -18,22 +18,26 @@ pub enum SettlementVerificationStatus {
 pub trait SettlementClient: Send + Sync {
     /// Should register the proof on the base layer and return an external id
     /// which can be used to track the status.
-    async fn register_proof(&self, proof: Vec<u8>) -> Result<String>;
+    async fn register_proof(&self, proof: [u8; 32]) -> Result<String>;
 
     /// Should be used to update state on core contract when DA is done in calldata
     async fn update_state_calldata(
         &self,
-        program_output: Vec<Vec<u8>>,
-        onchain_data_hash: Vec<u8>,
+        program_output: Vec<[u8; 32]>,
+        onchain_data_hash: [u8; 32],
         onchain_data_size: usize,
     ) -> Result<String>;
 
     /// Should be used to update state on core contract when DA is in blobs/alt DA
-    async fn update_state_blobs(&self, program_output: Vec<Vec<u8>>, kzg_proof: Vec<u8>) -> Result<String>;
+    async fn update_state_blobs(&self, program_output: Vec<[u8; 32]>, kzg_proof: [u8; 48]) -> Result<String>;
 
-    /// Should verify the inclusion of the state diff in the Settlement layer and return the status
-    async fn verify_inclusion(&self, external_id: &str) -> Result<SettlementVerificationStatus>;
+    /// Should verify the inclusion of a tx in the settlement layer
+    async fn verify_tx_inclusion(&self, tx_hash: &str) -> Result<SettlementVerificationStatus>;
 
+    /// Should wait that the pending tx_hash is finalized
+    async fn wait_for_tx_finality(&self, tx_hash: &str) -> Result<()>;
+
+    /// Should retrieves the last settled block in the settlement layer
     async fn get_last_settled_block(&self) -> Result<u64>;
 }
 
