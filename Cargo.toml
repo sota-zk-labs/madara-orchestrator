@@ -66,7 +66,6 @@ mockall = "0.12.1"
 testcontainers = "0.21.1"
 
 
-
 # Cairo VM
 cairo-vm = { version = "=1.0.0-rc5", features = [
   "extensive_hints",
