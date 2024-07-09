@@ -18,6 +18,7 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - name: Format and clippy
         run: |
-          cargo fmt -- --check
-          cargo clippy --no-deps -- -D warnings
-          cargo clippy --tests --no-deps -- -D warnings
+          sudo apt install build-essential cmake pkg-config libudev-dev
+          RUSTFLAGS="--cfg tokio_unstable" cargo fmt -- --check
+          RUSTFLAGS="--cfg tokio_unstable" cargo clippy --no-deps -- -D warnings
+          RUSTFLAGS="--cfg tokio_unstable" cargo clippy --tests --no-deps -- -D warnings
