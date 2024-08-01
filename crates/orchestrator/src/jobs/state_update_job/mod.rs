@@ -104,7 +104,7 @@ impl Job for StateUpdateJob {
         // If we had a block state update failing last run, we recover from this block
         if let Some(last_failed_block) = job.metadata.get(JOB_METADATA_STATE_UPDATE_LAST_FAILED_BLOCK_NO) {
             let last_failed_block =
-                last_failed_block.parse().map_err(|_| StateUpdateError::LastFailedBlockNonPositive)?;
+                last_failed_block.parse::<u64>().map_err(|_| StateUpdateError::LastFailedBlockNonPositive)?;
 
             block_numbers = block_numbers.into_iter().filter(|&block| block >= last_failed_block).collect::<Vec<u64>>();
         }

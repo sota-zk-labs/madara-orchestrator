@@ -204,9 +204,9 @@ mod test {
 
     use super::*;
 
-    const REGISTER_FACT: &'static str = "register_fact";
-    const FACT_REGISTRY: &'static str = "fact_registry";
-    const INIT_CONTRACT_STATE: &'static str = "initialize_contract_state";
+    const REGISTER_FACT: &str = "register_fact";
+    const FACT_REGISTRY: &str = "fact_registry";
+    const INIT_CONTRACT_STATE: &str = "initialize_contract_state";
 
     async fn aptos_init_state(settlement_client: &AptosSettlementClient) {
         let payload = TransactionPayload::EntryFunction(EntryFunction::new(
@@ -259,7 +259,7 @@ mod test {
                 let aptos_container = lazy_aptos_container().await.unwrap();
                 let node_url = aptos_container.get_node_url().await.unwrap();
 
-                let module_account_private_key = accounts.get(0).unwrap();
+                let module_account_private_key = accounts.first().unwrap();
                 let module_account = LocalAccount::from_private_key(module_account_private_key, 0).unwrap();
 
                 let config = AptosSettlementConfig {

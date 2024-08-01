@@ -97,6 +97,7 @@ impl SettlementClient for StarknetSettlementClient {
     }
 
     /// Should be used to update state on core contract when DA is done in calldata
+    #[allow(deprecated)]
     async fn update_state_calldata(
         &self,
         program_output: Vec<[u8; 32]>,
