@@ -10,7 +10,6 @@ async-trait = { workspace = true }
 c-kzg = { workspace = true }
 color-eyre = { workspace = true }
 da-client-interface = { workspace = true }
-dotenv = { workspace = true }
-serde = { workspace = true }
-url = { workspace = true }
+dotenvy = { workspace = true }
+tokio = { workspace = true }
 utils = { workspace = true }

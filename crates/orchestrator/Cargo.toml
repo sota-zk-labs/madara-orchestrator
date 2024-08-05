@@ -28,6 +28,7 @@ color-eyre = { workspace = true }
 da-client-interface = { workspace = true }
 dotenvy = { workspace = true }
 ethereum-da-client = { workspace = true, optional = true }
+aptos-da-client = { workspace = true, optional = true }
 ethereum-settlement-client = { workspace = true }
 futures = { workspace = true }
 hex = { workspace = true }
@@ -60,8 +61,9 @@ utils = { workspace = true }
 uuid = { workspace = true, features = ["v4", "serde"] }
 
 [features]
-default = ["ethereum", "with_mongodb", "with_sqs"]
+default = ["aptos", "ethereum", "with_mongodb", "with_sqs"]
 ethereum = ["ethereum-da-client"]
+aptos = ["aptos-da-client"]
 with_mongodb = ["mongodb"]
 with_sqs = ["omniqueue"]
 
