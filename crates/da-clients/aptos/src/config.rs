@@ -1,32 +1,48 @@
-use aptos_sdk::crypto::_once_cell::sync::Lazy;
-use da_client_interface::DaConfig;
+use std::path::Path;
 use std::str::FromStr;
-use url::Url;
+
+use aptos_sdk::rest_client::Client;
+use aptos_sdk::types::chain_id::ChainId;
+use async_trait::async_trait;
+use c_kzg::KzgSettings;
+use dotenvy::dotenv;
+
+use da_client_interface::DaConfig;
 use utils::env_utils::get_env_var_or_panic;
+
+use crate::helper::from_private_key;
+use crate::AptosDaClient;
 
 #[derive(Clone, Debug)]
 pub struct AptosDaConfig {
     pub node_url: String,
     pub private_key: String,
-    pub account_address: String,
+    pub module_address: String,
+    pub chain_id: String,
+    pub trusted_setup: String,
 }
 
-impl DaConfig for AptosDaConfig {
+#[async_trait]
+impl DaConfig<AptosDaClient> for AptosDaConfig {
     fn new_from_env() -> Self {
-        static NODE_URL: Lazy<Url> = Lazy::new(|| {
-            Url::from_str(
-                std::env::var("APTOS_NODE_URL")
-                    .as_ref()
-                    .map(|s| s.as_str())
-                    .unwrap_or("https://fullnode.devnet.aptoslabs.com"),
-            )
-            .unwrap()
-        });
+        dotenv().expect("Failed to load .env file");
+        let node_url = get_env_var_or_panic("APTOS_NODE_URL");
+        let private_key = get_env_var_or_panic("APTOS_PRIVATE_KEY");
+        let module_address = get_env_var_or_panic("APTOS_MODULE_ADDRESS");
+        let chain_id = get_env_var_or_panic("APTOS_CHAIN_ID");
+        let trusted_setup = get_env_var_or_panic("APTOS_CRS_PATH");
 
-        Self {
-            node_url: NODE_URL.to_string(),
-            private_key: get_env_var_or_panic("PRIVATE_KEY"),
-            account_address: get_env_var_or_panic("ADDRESS"),
-        }
+        Self { chain_id, node_url, private_key, module_address, trusted_setup }
+    }
+
+    async fn build_client(&self) -> AptosDaClient {
+        let client = Client::new(self.node_url.parse().unwrap());
+        let account = from_private_key(&self.private_key, 0).unwrap();
+        let module_address = self.module_address.parse().expect("Invalid module address");
+        let chain_id = ChainId::from_str(&self.chain_id).expect("Invalid chain id");
+        let trusted_setup =
+            KzgSettings::load_trusted_setup_file(Path::new(&self.trusted_setup)).expect("Failed to load trusted setup");
+
+        AptosDaClient { client, account, module_address, chain_id, trusted_setup }
     }
 }
