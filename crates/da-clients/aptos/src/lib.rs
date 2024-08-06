@@ -9,7 +9,8 @@ use aptos_sdk::move_types::account_address::AccountAddress;
 use aptos_sdk::move_types::identifier::Identifier;
 use aptos_sdk::move_types::language_storage::ModuleId;
 use aptos_sdk::move_types::value::{serialize_values, MoveValue};
-use aptos_sdk::rest_client::Client;
+use aptos_sdk::rest_client::error::RestError;
+use aptos_sdk::rest_client::{Client, PendingTransaction};
 use aptos_sdk::types::chain_id::ChainId;
 use aptos_sdk::types::transaction::{EntryFunction, TransactionPayload};
 use aptos_sdk::types::LocalAccount;
@@ -38,7 +39,6 @@ const BLOB_SUBMISSION: &str = "blob_submission";
 #[async_trait]
 impl DaClient for AptosDaClient {
     async fn publish_state_diff(&self, state_diff: Vec<Vec<u8>>, _to: &[u8; 32]) -> color_eyre::Result<String> {
-        // Create blobs, commitments, proofs from state_diff and trusted setup and transfer to "MoveValue".
         let data = prepare_blob(&state_diff, &self.trusted_setup).await?;
         let loop_cycle = get_env_var_or_panic("LOOP_CYCLE").parse::<usize>()?;
 
@@ -88,10 +88,7 @@ impl DaClient for AptosDaClient {
             .into_iter()
             .map(|tx| {
                 let client = self.client.clone();
-                tokio::spawn(async move {
-                    
-                    client.submit(&tx).await.unwrap().into_inner()
-                })
+                tokio::spawn(async move { Ok::<PendingTransaction, RestError>(client.submit(&tx).await?.into_inner()) })
             })
             .collect::<Vec<_>>();
 
@@ -106,9 +103,10 @@ impl DaClient for AptosDaClient {
             .map(|pending_tx| {
                 let client = self.client.clone();
                 tokio::spawn(async move {
+                    let pending_tx = pending_tx?;
                     let transaction = client.wait_for_transaction(&pending_tx).await.unwrap().into_inner();
                     let transaction_info = transaction.transaction_info().unwrap();
-                    transaction_info.hash.to_string()
+                    Ok::<String, RestError>(transaction_info.hash.to_string())
                 })
             })
             .collect::<Vec<_>>();
@@ -116,7 +114,7 @@ impl DaClient for AptosDaClient {
         // Handle "wait for transaction" threads and combine the transaction hash.
         let mut hashes_combined: String = "".to_string();
         for handle in results {
-            let hash = handle.await.unwrap();
+            let hash: String = handle.await?.unwrap();
             hashes_combined.push_str(&hash);
         }
 
@@ -125,15 +123,25 @@ impl DaClient for AptosDaClient {
 
     async fn verify_inclusion(&self, external_id: &str) -> color_eyre::Result<DaVerificationStatus> {
         let client = &self.client;
-        let txn = client.get_transaction_by_hash(HashValue::from_str(external_id).unwrap()).await?;
-        let response = txn.into_inner();
-        match response.success() {
-            true => Ok(DaVerificationStatus::Verified),
-            false => match response.is_pending() {
-                true => Ok(DaVerificationStatus::Pending),
-                false => Ok(DaVerificationStatus::Rejected("Failed".parse()?)),
-            },
+
+        let hash_split = external_id.split("0x").filter(|&s| !s.is_empty()).collect::<Vec<_>>();
+        let failed_hashes: Vec<&str> = Vec::new();
+
+        for hash_ptr in hash_split {
+            let hash = HashValue::from_str(hash_ptr)?;
+            match client.get_transaction_by_hash(hash).await {
+                Ok(tx) => {
+                    if !tx.into_inner().success() {
+                        return Ok(DaVerificationStatus::Rejected(format!("Transaction {:#?} failed", failed_hashes)));
+                    }
+                }
+                Err(e) => {
+                    // Handle the case where the transaction retrieval fails
+                    return Err(color_eyre::Report::new(e));
+                }
+            }
         }
+        Ok(DaVerificationStatus::Verified)
     }
 
     async fn max_blob_per_txn(&self) -> u64 {
@@ -173,11 +181,13 @@ async fn prepare_blob(
 
 #[cfg(test)]
 mod test {
+    use std::time::{SystemTime, UNIX_EPOCH};
+
     use alloy::hex;
     use aptos_sdk::move_types::u256;
     use aptos_sdk::transaction_builder::TransactionBuilder;
+
     use da_client_interface::DaConfig;
-    use std::time::{SystemTime, UNIX_EPOCH};
 
     use crate::config::AptosDaConfig;
 
@@ -186,15 +196,24 @@ mod test {
     const INIT_CONTRACT_STATE: &'static str = "initialize_contract_state";
 
     #[tokio::test]
+    async fn test_verify_inclusion() {
+        let da_config = AptosDaConfig::new_from_env();
+        let da_client = AptosDaConfig::build_client(&da_config).await;
+        let result = da_client.verify_inclusion("0x5780918bd8d367bd0be6c004385afb523ffb2a0f3f0da2daf053e456949a0d5e0x74bb322d08a1c606079416faefd363737cb7a348e4ede9d1a1b734b70861aab60x1cbcab74c852017ef568fac2cc4e795cb75d37d33dfc2aecdddb2853d8adf2230x1c99f5a813923917d5584a745212306631d228437fbaef1fde548abfd37300ad").await;
+        eprintln!("result = {:#?}", result);
+    }
+
+    #[tokio::test]
     async fn test_submit_blob() {
         let da_config = AptosDaConfig::new_from_env();
         let da_client = AptosDaConfig::build_client(&da_config).await;
 
         let data = vec![hex::decode(include_str!("../test_utils/hex_block_630872.txt")).unwrap()];
-        da_client
+        let result = da_client
             .publish_state_diff(data, &u256::U256::from(0u128).to_le_bytes())
             .await
             .expect("Failed to submit blob!");
+        eprintln!("result = {:#?}", result);
     }
 
     #[tokio::test]
