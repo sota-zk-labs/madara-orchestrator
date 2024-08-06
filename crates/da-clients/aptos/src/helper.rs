@@ -1,8 +1,9 @@
+use std::time::SystemTime;
+
 use aptos_sdk::transaction_builder::TransactionBuilder;
 use aptos_sdk::types::chain_id::ChainId;
 use aptos_sdk::types::transaction::{SignedTransaction, TransactionPayload};
 use aptos_sdk::types::LocalAccount;
-use std::time::SystemTime;
 
 pub(crate) fn build_transaction(
     payload: TransactionPayload,

@@ -33,8 +33,8 @@ impl DaConfig<AptosDaClient> for AptosDaConfig {
         let private_key = get_env_var_or_panic("APTOS_PRIVATE_KEY");
         let account_address = get_env_var_or_panic("APTOS_ACCOUNT_ADDRESS");
         let module_address = get_env_var_or_panic("APTOS_MODULE_ADDRESS");
-        let chain_id = get_env_var_or_panic("CHAIN_ID");
-        let trusted_setup = get_env_var_or_panic("TRUSTED_SETUP");
+        let chain_id = get_env_var_or_panic("APTOS_CHAIN_ID");
+        let trusted_setup = get_env_var_or_panic("APTOS_CRS_PATH");
 
         Self { chain_id, node_url, private_key, account_address, module_address, trusted_setup }
     }
