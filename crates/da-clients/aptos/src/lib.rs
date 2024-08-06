@@ -8,13 +8,13 @@ use aptos_sdk::crypto::HashValue;
 use aptos_sdk::move_types::account_address::AccountAddress;
 use aptos_sdk::move_types::identifier::Identifier;
 use aptos_sdk::move_types::language_storage::ModuleId;
-use aptos_sdk::move_types::value::{MoveValue, serialize_values};
+use aptos_sdk::move_types::value::{serialize_values, MoveValue};
 use aptos_sdk::rest_client::Client;
 use aptos_sdk::types::chain_id::ChainId;
-use aptos_sdk::types::LocalAccount;
 use aptos_sdk::types::transaction::{EntryFunction, TransactionPayload};
+use aptos_sdk::types::LocalAccount;
 use async_trait::async_trait;
-use c_kzg::{Blob, BYTES_PER_BLOB, KzgCommitment, KzgProof, KzgSettings};
+use c_kzg::{Blob, KzgCommitment, KzgProof, KzgSettings, BYTES_PER_BLOB};
 
 use da_client_interface::{DaClient, DaVerificationStatus};
 use utils::env_utils::get_env_var_or_panic;
@@ -74,7 +74,7 @@ impl DaClient for AptosDaClient {
                 Identifier::new(BLOB_SUBMISSION).unwrap(),
                 vec![],
                 serialize_values(vec![
-                    &MoveValue::Vector(blobs.get(0).unwrap().get(i).unwrap().to_vec()),
+                    &MoveValue::Vector(blobs.first().unwrap().get(i).unwrap().to_vec()),
                     &MoveValue::Vector(commitments.clone()),
                     &MoveValue::Vector(proofs.clone()),
                 ]),
@@ -89,8 +89,8 @@ impl DaClient for AptosDaClient {
             .map(|tx| {
                 let client = self.client.clone();
                 tokio::spawn(async move {
-                    let init_tx = client.submit(&tx).await.unwrap().into_inner();
-                    init_tx
+                    
+                    client.submit(&tx).await.unwrap().into_inner()
                 })
             })
             .collect::<Vec<_>>();
@@ -117,7 +117,7 @@ impl DaClient for AptosDaClient {
         let mut hashes_combined: String = "".to_string();
         for handle in results {
             let hash = handle.await.unwrap();
-            hashes_combined.push_str(&*hash);
+            hashes_combined.push_str(&hash);
         }
 
         Ok(hashes_combined)
@@ -161,7 +161,7 @@ async fn prepare_blob(
 
         let commitment = KzgCommitment::blob_to_kzg_commitment(&blob, trusted_setup)?;
         let proof = KzgProof::compute_blob_kzg_proof(&blob, &commitment.to_bytes(), trusted_setup)?;
-        
+
         result.push((
             FixedBytes::new(fixed_size_blob),
             FixedBytes::new(commitment.to_bytes().into_inner()),
@@ -173,11 +173,11 @@ async fn prepare_blob(
 
 #[cfg(test)]
 mod test {
-    use std::time::{SystemTime, UNIX_EPOCH};
     use alloy::hex;
     use aptos_sdk::move_types::u256;
     use aptos_sdk::transaction_builder::TransactionBuilder;
     use da_client_interface::DaConfig;
+    use std::time::{SystemTime, UNIX_EPOCH};
 
     use crate::config::AptosDaConfig;
 
