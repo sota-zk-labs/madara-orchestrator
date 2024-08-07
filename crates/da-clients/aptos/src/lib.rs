@@ -18,7 +18,6 @@ use async_trait::async_trait;
 use c_kzg::{Blob, KzgCommitment, KzgProof, KzgSettings, BYTES_PER_BLOB};
 
 use da_client_interface::{DaClient, DaVerificationStatus};
-use utils::env_utils::get_env_var_or_panic;
 
 use crate::helper::build_transaction;
 
@@ -35,21 +34,20 @@ pub struct AptosDaClient {
 
 const STARKNET_VALIDITY: &str = "starknet_validity";
 const BLOB_SUBMISSION: &str = "blob_submission";
+const MAX_BLOB_PART_SIZE: usize = 32768;
 
 #[async_trait]
 impl DaClient for AptosDaClient {
     async fn publish_state_diff(&self, state_diff: Vec<Vec<u8>>, _to: &[u8; 32]) -> color_eyre::Result<String> {
         let data = prepare_blob(&state_diff, &self.trusted_setup).await?;
-        let loop_cycle = get_env_var_or_panic("LOOP_CYCLE").parse::<usize>()?;
 
-        // TODO: It’s better to use .unzip() for cleaner code.
         let (blobs, commitments, proofs) = data
             .into_iter()
             .map(|(blob, commitment, proof)| {
                 (
-                    // Split blobs into "loop_cycle" parts.
+                    // Split blobs into "loop_cycle" parts
                     blob.to_vec()
-                        .chunks(BYTES_PER_BLOB / loop_cycle)
+                        .chunks(MAX_BLOB_PART_SIZE)
                         .map(|part| vec![MoveValue::vector_u8(part.to_vec())])
                         .collect::<Vec<_>>(),
                     MoveValue::vector_u8(commitment.to_vec()),
@@ -68,7 +66,7 @@ impl DaClient for AptosDaClient {
         self.account.set_sequence_number(sequence_number);
         let mut txs = vec![];
 
-        for i in 0..loop_cycle {
+        for i in 0..BYTES_PER_BLOB / MAX_BLOB_PART_SIZE {
             let payload = TransactionPayload::EntryFunction(EntryFunction::new(
                 ModuleId::new(self.account.address(), Identifier::new(STARKNET_VALIDITY).unwrap()),
                 Identifier::new(BLOB_SUBMISSION).unwrap(),
@@ -83,7 +81,7 @@ impl DaClient for AptosDaClient {
             txs.push(tx);
         }
 
-        // Submit transaction.
+        // Submit transaction
         let pending_transactions = txs
             .into_iter()
             .map(|tx| {
@@ -97,7 +95,7 @@ impl DaClient for AptosDaClient {
             results.push(handle.await.unwrap());
         }
 
-        // Wait for transaction.
+        // Wait for transaction
         let results = results
             .into_iter()
             .map(|pending_tx| {
@@ -111,7 +109,7 @@ impl DaClient for AptosDaClient {
             })
             .collect::<Vec<_>>();
 
-        // Handle "wait for transaction" threads and combine the transaction hash.
+        // Handle "wait for transaction" threads and combine the transaction hash
         let mut hashes_combined: String = "".to_string();
         for handle in results {
             let hash: String = handle.await?.unwrap();
@@ -181,55 +179,79 @@ async fn prepare_blob(
 
 #[cfg(test)]
 mod test {
+    use std::collections::HashMap;
+    use std::sync::Arc;
     use std::time::{SystemTime, UNIX_EPOCH};
+    use tokio::sync::Mutex;
 
+    use super::*;
+    use crate::config::AptosDaConfig;
+    use crate::helper::from_private_key;
     use alloy::hex;
     use aptos_sdk::move_types::u256;
     use aptos_sdk::transaction_builder::TransactionBuilder;
-
+    use aptos_testcontainer::aptos_container::AptosContainer;
     use da_client_interface::DaConfig;
-
-    use crate::config::AptosDaConfig;
-
-    use super::*;
+    use lazy_static::lazy_static;
 
     const INIT_CONTRACT_STATE: &'static str = "initialize_contract_state";
 
-    #[tokio::test]
-    async fn test_verify_inclusion() {
-        let da_config = AptosDaConfig::new_from_env();
+    lazy_static! {
+        static ref APTOS_CONTAINER: Arc<Mutex<Option<AptosContainer>>> = Arc::new(Mutex::new(None));
+        static ref MODULE_ACCOUNT: LocalAccount =
+            from_private_key("0x73791ce34b2414d4afcb87561b0c442e48a3260f1c96de31da80f7cf2eec8113", 0).unwrap();
+        static ref SENDER_ACCOUNT: LocalAccount =
+            from_private_key("0x73791ce34b2414d4afcb87561b0c442e48a3260f1c96de31da80f7cf2eec8113", 0).unwrap();
+    }
+
+    async fn init_aptos() {
+        let mut container = APTOS_CONTAINER.lock().await;
+
+        if container.is_none() {
+            let aptos_container = AptosContainer::init().await.unwrap();
+
+            aptos_container.faucet(&MODULE_ACCOUNT).await.unwrap();
+            aptos_container.faucet(&SENDER_ACCOUNT).await.unwrap();
+
+            let mut named_addresses = HashMap::new();
+            named_addresses.insert("starknet_addr".to_string(), MODULE_ACCOUNT.address().to_string());
+
+            aptos_container.upload_contract("../../../../ionia", &MODULE_ACCOUNT, &named_addresses).await.unwrap();
+
+            *container = Some(aptos_container);
+        };
+    }
+
+    async fn init_aptos_client() -> AptosDaClient {
+        init_aptos().await;
+
+        let aptos_container = APTOS_CONTAINER.lock().await;
+        let aptos_container = aptos_container.as_ref().unwrap();
+
+        let da_config = AptosDaConfig {
+            node_url: aptos_container.get_node_url().await.unwrap(),
+            private_key: SENDER_ACCOUNT.private_key().to_string(),
+            module_address: MODULE_ACCOUNT.address().to_string(),
+            chain_id: "4".to_string(),
+            trusted_setup: "./trusted_setup.txt".to_string(),
+        };
+
         let da_client = AptosDaConfig::build_client(&da_config).await;
-        let result = da_client.verify_inclusion("0x5780918bd8d367bd0be6c004385afb523ffb2a0f3f0da2daf053e456949a0d5e0x74bb322d08a1c606079416faefd363737cb7a348e4ede9d1a1b734b70861aab60x1cbcab74c852017ef568fac2cc4e795cb75d37d33dfc2aecdddb2853d8adf2230x1c99f5a813923917d5584a745212306631d228437fbaef1fde548abfd37300ad").await;
-        eprintln!("result = {:#?}", result);
+        da_client
     }
 
     #[tokio::test]
-    async fn test_submit_blob() {
-        let da_config = AptosDaConfig::new_from_env();
-        let da_client = AptosDaConfig::build_client(&da_config).await;
+    async fn test_aptos_da_client() {
+        let da_client = init_aptos_client().await;
 
-        let data = vec![hex::decode(include_str!("../test_utils/hex_block_630872.txt")).unwrap()];
-        let result = da_client
-            .publish_state_diff(data, &u256::U256::from(0u128).to_le_bytes())
-            .await
-            .expect("Failed to submit blob!");
-        eprintln!("result = {:#?}", result);
-    }
+        let chain_id = da_client.chain_id.clone();
+        let module_address = da_client.module_address.clone();
 
-    #[tokio::test]
-    async fn init_state() {
-        let da_config = AptosDaConfig::new_from_env();
-        let da_client = AptosDaConfig::build_client(&da_config).await;
+        let sequence_number =
+            da_client.client.get_account(da_client.account.address()).await.unwrap().into_inner().sequence_number;
+        da_client.account.set_sequence_number(sequence_number);
 
-        let client = da_client.client;
-        let account = da_client.account;
-        let chain_id = da_client.chain_id;
-        let module_address = da_client.module_address;
-
-        let sequence_number = client.get_account(account.address()).await.unwrap().into_inner().sequence_number;
-        account.set_sequence_number(sequence_number);
-
-        let sequencer_number = account.increment_sequence_number();
+        let sequencer_number = da_client.account.increment_sequence_number();
 
         let tx_builder = TransactionBuilder::new(
             TransactionPayload::EntryFunction(EntryFunction::new(
@@ -251,17 +273,30 @@ mod test {
             SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs() + 60,
             chain_id,
         )
-        .sender(account.address())
+        .sender(da_client.account.address())
         .sequence_number(sequencer_number)
         .max_gas_amount(10000)
         .gas_unit_price(100)
         .build();
 
-        let signed_txn = account.sign_transaction(tx_builder);
-        let tx = client.submit_and_wait(&signed_txn).await.expect("Failed to submit transfer transaction").into_inner();
-
-        println!("{:?}", tx);
+        let signed_txn = da_client.account.sign_transaction(tx_builder);
+        let tx = da_client
+            .client
+            .submit_and_wait(&signed_txn)
+            .await
+            .expect("Failed to submit transfer transaction")
+            .into_inner();
 
         assert!(tx.success(), "Transaction Failed");
+
+        let data = vec![hex::decode(include_str!("../test_utils/hex_block_630872.txt")).unwrap()];
+        let result = da_client
+            .publish_state_diff(data, &u256::U256::from(0u128).to_le_bytes())
+            .await
+            .expect("Failed to submit blob!");
+        eprintln!("result = {:#?}", result);
+
+        let verify_inclusion = da_client.verify_inclusion(result.as_str()).await.unwrap();
+        eprintln!("verify_inclusion = {:#?}", verify_inclusion);
     }
 }
