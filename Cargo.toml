@@ -58,7 +58,9 @@ stark_evm_adapter = "0.1.1"
 hex = "0.4"
 itertools = "0.13.0"
 mockall = "0.12.1"
-testcontainers = "0.18.0"
+testcontainers = "0.21.1"
+jemallocator = { package = "tikv-jemallocator", version = "0.5.4" }
+aptos-testcontainer = { path = "../aptos-testcontainer" }
 
 # Cairo VM
 cairo-vm = { git = "https://github.com/lambdaclass/cairo-vm", features = [
