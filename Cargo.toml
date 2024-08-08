@@ -12,6 +12,7 @@ members = [
   "crates/settlement-clients/ethereum",
   "crates/settlement-clients/starknet",
   "e2e-tests",
+  "crates/settlement-clients/aptos",
 ]
 
 [workspace.package]
@@ -59,6 +60,7 @@ itertools = "0.13.0"
 mockall = "0.12.1"
 testcontainers = "0.18.0"
 
+
 # Cairo VM
 cairo-vm = { git = "https://github.com/lambdaclass/cairo-vm", features = [
   "extensive_hints",
@@ -88,3 +90,8 @@ prover-client-interface = { path = "crates/prover-services/prover-client-interfa
 gps-fact-checker = { path = "crates/prover-services/gps-fact-checker" }
 sharp-service = { path = "crates/prover-services/sharp-service" }
 orchestrator = { path = "crates/orchestrator" }
+
+aptos-sdk = { git = "https://github.com/sota-zk-labs/aptos-core" }
+[patch.crates-io]
+merlin = { git = "https://github.com/aptos-labs/merlin" }
+x25519-dalek = { git = "https://github.com/Tranduy1dol/x25519-dalek", branch = "zeroize_v1.7" }
