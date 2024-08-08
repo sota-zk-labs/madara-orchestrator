@@ -3,6 +3,7 @@ use std::sync::Arc;
 use crate::data_storage::aws_s3::config::{AWSS3Config, AWSS3ConfigType};
 use crate::data_storage::aws_s3::AWSS3;
 use crate::data_storage::{DataStorage, DataStorageConfig};
+use aptos_da_client::config::AptosDaConfig;
 use arc_swap::{ArcSwap, Guard};
 use da_client_interface::{DaClient, DaConfig};
 use dotenvy::dotenv;
@@ -152,6 +153,10 @@ pub async fn build_da_client() -> Box<dyn DaClient + Send + Sync> {
     match get_env_var_or_panic("DA_LAYER").as_str() {
         "ethereum" => {
             let config = EthereumDaConfig::new_from_env();
+            Box::new(config.build_client().await)
+        }
+        "aptos" => {
+            let config = AptosDaConfig::new_from_env();
             Box::new(config.build_client().await)
         }
         _ => panic!("Unsupported DA layer"),

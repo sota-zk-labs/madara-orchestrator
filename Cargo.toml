@@ -4,6 +4,7 @@ members = [
   "crates/orchestrator",
   "crates/da-clients/da-client-interface",
   "crates/da-clients/ethereum",
+  "crates/da-clients/aptos",
   "crates/prover-services/prover-client-interface",
   "crates/prover-services/gps-fact-checker",
   "crates/prover-services/sharp-service",
@@ -57,7 +58,9 @@ stark_evm_adapter = "0.1.1"
 hex = "0.4"
 itertools = "0.13.0"
 mockall = "0.12.1"
-testcontainers = "0.18.0"
+testcontainers = "0.21.1"
+aptos-testcontainer = { git = "https://github.com/sota-zk-labs/aptos-testcontainer.git" }
+aptos-sdk = { git = "https://github.com/aptos-labs/aptos-core", branch = "mainnet" }
 
 # Cairo VM
 cairo-vm = { git = "https://github.com/lambdaclass/cairo-vm", features = [
@@ -78,6 +81,7 @@ madara-prover-rpc-client = { git = "https://github.com/Moonsong-Labs/madara-prov
 # Project
 da-client-interface = { path = "crates/da-clients/da-client-interface" }
 ethereum-da-client = { path = "crates/da-clients/ethereum" }
+aptos-da-client = { path = "crates/da-clients/aptos" }
 
 settlement-client-interface = { path = "crates/settlement-clients/settlement-client-interface" }
 ethereum-settlement-client = { path = "crates/settlement-clients/ethereum" }
@@ -88,3 +92,7 @@ prover-client-interface = { path = "crates/prover-services/prover-client-interfa
 gps-fact-checker = { path = "crates/prover-services/gps-fact-checker" }
 sharp-service = { path = "crates/prover-services/sharp-service" }
 orchestrator = { path = "crates/orchestrator" }
+
+[patch.crates-io]
+x25519-dalek = { git = "https://github.com/Tranduy1dol/x25519-dalek" }
+merlin = { git = "https://github.com/aptos-labs/merlin" }
