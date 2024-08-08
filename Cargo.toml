@@ -59,8 +59,8 @@ hex = "0.4"
 itertools = "0.13.0"
 mockall = "0.12.1"
 testcontainers = "0.21.1"
-jemallocator = { package = "tikv-jemallocator", version = "0.5.4" }
-aptos-testcontainer = { path = "../aptos-testcontainer" }
+aptos-testcontainer = { git = "https://github.com/sota-zk-labs/aptos-testcontainer.git" }
+aptos-sdk = { git = "https://github.com/aptos-labs/aptos-core", branch = "mainnet" }
 
 # Cairo VM
 cairo-vm = { git = "https://github.com/lambdaclass/cairo-vm", features = [
@@ -93,8 +93,6 @@ gps-fact-checker = { path = "crates/prover-services/gps-fact-checker" }
 sharp-service = { path = "crates/prover-services/sharp-service" }
 orchestrator = { path = "crates/orchestrator" }
 
-# Aptos
-aptos-sdk = { git = "https://github.com/sota-zk-labs/aptos-core" }
 [patch.crates-io]
+x25519-dalek = { git = "https://github.com/Tranduy1dol/x25519-dalek" }
 merlin = { git = "https://github.com/aptos-labs/merlin" }
-x25519-dalek = { git = "https://github.com/Tranduy1dol/x25519-dalek", branch = "zeroize_v1.7" }

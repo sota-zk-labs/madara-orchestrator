@@ -8,14 +8,14 @@ use aptos_sdk::crypto::HashValue;
 use aptos_sdk::move_types::account_address::AccountAddress;
 use aptos_sdk::move_types::identifier::Identifier;
 use aptos_sdk::move_types::language_storage::ModuleId;
-use aptos_sdk::move_types::value::{serialize_values, MoveValue};
-use aptos_sdk::rest_client::error::RestError;
+use aptos_sdk::move_types::value::{MoveValue, serialize_values};
 use aptos_sdk::rest_client::{Client, PendingTransaction};
+use aptos_sdk::rest_client::error::RestError;
 use aptos_sdk::types::chain_id::ChainId;
-use aptos_sdk::types::transaction::{EntryFunction, TransactionPayload};
 use aptos_sdk::types::LocalAccount;
+use aptos_sdk::types::transaction::{EntryFunction, TransactionPayload};
 use async_trait::async_trait;
-use c_kzg::{Blob, KzgCommitment, KzgProof, KzgSettings, BYTES_PER_BLOB};
+use c_kzg::{Blob, BYTES_PER_BLOB, KzgCommitment, KzgProof, KzgSettings};
 
 use da_client_interface::{DaClient, DaVerificationStatus};
 
@@ -182,26 +182,28 @@ mod test {
     use std::collections::HashMap;
     use std::sync::Arc;
     use std::time::{SystemTime, UNIX_EPOCH};
-    use tokio::sync::Mutex;
 
-    use super::*;
-    use crate::config::AptosDaConfig;
-    use crate::helper::from_private_key;
     use alloy::hex;
     use aptos_sdk::move_types::u256;
     use aptos_sdk::transaction_builder::TransactionBuilder;
     use aptos_testcontainer::aptos_container::AptosContainer;
-    use da_client_interface::DaConfig;
     use lazy_static::lazy_static;
+    use tokio::sync::Mutex;
+
+    use da_client_interface::DaConfig;
+
+    use crate::config::AptosDaConfig;
+
+    use super::*;
 
     const INIT_CONTRACT_STATE: &'static str = "initialize_contract_state";
 
     lazy_static! {
         static ref APTOS_CONTAINER: Arc<Mutex<Option<AptosContainer>>> = Arc::new(Mutex::new(None));
         static ref MODULE_ACCOUNT: LocalAccount =
-            from_private_key("0x73791ce34b2414d4afcb87561b0c442e48a3260f1c96de31da80f7cf2eec8113", 0).unwrap();
+            LocalAccount::from_private_key("0x73791ce34b2414d4afcb87561b0c442e48a3260f1c96de31da80f7cf2eec8113", 0).unwrap();
         static ref SENDER_ACCOUNT: LocalAccount =
-            from_private_key("0x73791ce34b2414d4afcb87561b0c442e48a3260f1c96de31da80f7cf2eec8113", 0).unwrap();
+           LocalAccount::from_private_key("0x73791ce34b2414d4afcb87561b0c442e48a3260f1c96de31da80f7cf2eec8113", 0).unwrap();
     }
 
     async fn init_aptos() {
@@ -267,17 +269,17 @@ mod test {
                         &MoveValue::U256(u256::U256::from_str_radix("0", 10).unwrap()),
                         &MoveValue::U256(u256::U256::from_str_radix("0", 10).unwrap()),
                     ]
-                    .into_iter(),
+                        .into_iter(),
                 ),
             )),
             SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs() + 60,
             chain_id,
         )
-        .sender(da_client.account.address())
-        .sequence_number(sequencer_number)
-        .max_gas_amount(10000)
-        .gas_unit_price(100)
-        .build();
+            .sender(da_client.account.address())
+            .sequence_number(sequencer_number)
+            .max_gas_amount(10000)
+            .gas_unit_price(100)
+            .build();
 
         let signed_txn = da_client.account.sign_transaction(tx_builder);
         let tx = da_client

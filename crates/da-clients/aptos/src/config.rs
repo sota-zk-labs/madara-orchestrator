@@ -3,6 +3,7 @@ use std::str::FromStr;
 
 use aptos_sdk::rest_client::Client;
 use aptos_sdk::types::chain_id::ChainId;
+use aptos_sdk::types::LocalAccount;
 use async_trait::async_trait;
 use c_kzg::KzgSettings;
 use dotenvy::dotenv;
@@ -10,7 +11,6 @@ use dotenvy::dotenv;
 use da_client_interface::DaConfig;
 use utils::env_utils::get_env_var_or_panic;
 
-use crate::helper::from_private_key;
 use crate::AptosDaClient;
 
 #[derive(Clone, Debug)]
@@ -37,7 +37,7 @@ impl DaConfig<AptosDaClient> for AptosDaConfig {
 
     async fn build_client(&self) -> AptosDaClient {
         let client = Client::new(self.node_url.parse().unwrap());
-        let account = from_private_key(&self.private_key, 0).unwrap();
+        let account = LocalAccount::from_private_key(&self.private_key, 0).unwrap();
         let module_address = self.module_address.parse().expect("Invalid module address");
         let chain_id = ChainId::from_str(&self.chain_id).expect("Invalid chain id");
         let trusted_setup =

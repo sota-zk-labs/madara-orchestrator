@@ -11,7 +11,7 @@ checksum = "fe438c63458706e03479442743baae6c88256498e6431708f6dfc520a26515d3"
 [[package]]
 name = "abstract-domain-derive"
 version = "0.1.0"
-source = "git+https://github.com/sota-zk-labs/aptos-core#8ff89f03030d5642771f792828b756399ce19bc7"
+source = "git+https://github.com/aptos-labs/aptos-core?branch=mainnet#9802bd084aadcd3565e95ca7f72ff940212875e5"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1092,7 +1092,7 @@ checksum = "b3d1d046238990b9cf5bcde22a3fb3584ee5cf65fb2765f454ed428c7a0063da"
 [[package]]
 name = "aptos-aggregator"
 version = "0.1.0"
-source = "git+https://github.com/sota-zk-labs/aptos-core#8ff89f03030d5642771f792828b756399ce19bc7"
+source = "git+https://github.com/aptos-labs/aptos-core?branch=mainnet#9802bd084aadcd3565e95ca7f72ff940212875e5"
 dependencies = [
  "aptos-logger",
  "aptos-types",
@@ -1106,7 +1106,7 @@ dependencies = [
 [[package]]
 name = "aptos-api-types"
 version = "0.0.1"
-source = "git+https://github.com/sota-zk-labs/aptos-core#8ff89f03030d5642771f792828b756399ce19bc7"
+source = "git+https://github.com/aptos-labs/aptos-core?branch=mainnet#9802bd084aadcd3565e95ca7f72ff940212875e5"
 dependencies = [
  "anyhow",
  "aptos-config",
@@ -1136,7 +1136,7 @@ dependencies = [
 [[package]]
 name = "aptos-bitvec"
 version = "0.1.0"
-source = "git+https://github.com/sota-zk-labs/aptos-core#8ff89f03030d5642771f792828b756399ce19bc7"
+source = "git+https://github.com/aptos-labs/aptos-core?branch=mainnet#9802bd084aadcd3565e95ca7f72ff940212875e5"
 dependencies = [
  "serde",
  "serde_bytes",
@@ -1145,7 +1145,7 @@ dependencies = [
 [[package]]
 name = "aptos-block-executor"
 version = "0.1.0"
-source = "git+https://github.com/sota-zk-labs/aptos-core#8ff89f03030d5642771f792828b756399ce19bc7"
+source = "git+https://github.com/aptos-labs/aptos-core?branch=mainnet#9802bd084aadcd3565e95ca7f72ff940212875e5"
 dependencies = [
  "anyhow",
  "aptos-aggregator",
@@ -1180,7 +1180,7 @@ dependencies = [
 [[package]]
 name = "aptos-block-partitioner"
 version = "0.1.0"
-source = "git+https://github.com/sota-zk-labs/aptos-core#8ff89f03030d5642771f792828b756399ce19bc7"
+source = "git+https://github.com/aptos-labs/aptos-core?branch=mainnet#9802bd084aadcd3565e95ca7f72ff940212875e5"
 dependencies = [
  "aptos-crypto",
  "aptos-logger",
@@ -1190,18 +1190,18 @@ dependencies = [
  "clap 4.5.13",
  "dashmap",
  "itertools 0.12.1",
+ "jemallocator",
  "move-core-types",
  "once_cell",
  "rand 0.7.3",
  "rayon",
  "serde",
- "tikv-jemallocator",
 ]
 
 [[package]]
 name = "aptos-cached-packages"
 version = "0.1.0"
-source = "git+https://github.com/sota-zk-labs/aptos-core#8ff89f03030d5642771f792828b756399ce19bc7"
+source = "git+https://github.com/aptos-labs/aptos-core?branch=mainnet#9802bd084aadcd3565e95ca7f72ff940212875e5"
 dependencies = [
  "anyhow",
  "aptos-framework",
@@ -1215,7 +1215,7 @@ dependencies = [
 [[package]]
 name = "aptos-config"
 version = "0.1.0"
-source = "git+https://github.com/sota-zk-labs/aptos-core#8ff89f03030d5642771f792828b756399ce19bc7"
+source = "git+https://github.com/aptos-labs/aptos-core?branch=mainnet#9802bd084aadcd3565e95ca7f72ff940212875e5"
 dependencies = [
  "anyhow",
  "aptos-crypto",
@@ -1232,7 +1232,6 @@ dependencies = [
  "get_if_addrs",
  "maplit",
  "num_cpus",
- "number_range",
  "poem-openapi",
  "rand 0.7.3",
  "serde",
@@ -1246,7 +1245,7 @@ dependencies = [
 [[package]]
 name = "aptos-crypto"
 version = "0.0.3"
-source = "git+https://github.com/sota-zk-labs/aptos-core#8ff89f03030d5642771f792828b756399ce19bc7"
+source = "git+https://github.com/aptos-labs/aptos-core?branch=mainnet#9802bd084aadcd3565e95ca7f72ff940212875e5"
 dependencies = [
  "aes-gcm",
  "anyhow",
@@ -1297,7 +1296,7 @@ dependencies = [
 [[package]]
 name = "aptos-crypto-derive"
 version = "0.0.3"
-source = "git+https://github.com/sota-zk-labs/aptos-core#8ff89f03030d5642771f792828b756399ce19bc7"
+source = "git+https://github.com/aptos-labs/aptos-core?branch=mainnet#9802bd084aadcd3565e95ca7f72ff940212875e5"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1324,7 +1323,7 @@ dependencies = [
 [[package]]
 name = "aptos-dkg"
 version = "0.1.0"
-source = "git+https://github.com/sota-zk-labs/aptos-core#8ff89f03030d5642771f792828b756399ce19bc7"
+source = "git+https://github.com/aptos-labs/aptos-core?branch=mainnet#9802bd084aadcd3565e95ca7f72ff940212875e5"
 dependencies = [
  "anyhow",
  "aptos-crypto",
@@ -1356,7 +1355,7 @@ dependencies = [
 [[package]]
 name = "aptos-drop-helper"
 version = "0.1.0"
-source = "git+https://github.com/sota-zk-labs/aptos-core#8ff89f03030d5642771f792828b756399ce19bc7"
+source = "git+https://github.com/aptos-labs/aptos-core?branch=mainnet#9802bd084aadcd3565e95ca7f72ff940212875e5"
 dependencies = [
  "aptos-infallible",
  "aptos-metrics-core",
@@ -1367,7 +1366,7 @@ dependencies = [
 [[package]]
 name = "aptos-experimental-runtimes"
 version = "0.1.0"
-source = "git+https://github.com/sota-zk-labs/aptos-core#8ff89f03030d5642771f792828b756399ce19bc7"
+source = "git+https://github.com/aptos-labs/aptos-core?branch=mainnet#9802bd084aadcd3565e95ca7f72ff940212875e5"
 dependencies = [
  "aptos-runtimes",
  "core_affinity",
@@ -1380,7 +1379,7 @@ dependencies = [
 [[package]]
 name = "aptos-framework"
 version = "0.1.0"
-source = "git+https://github.com/sota-zk-labs/aptos-core#8ff89f03030d5642771f792828b756399ce19bc7"
+source = "git+https://github.com/aptos-labs/aptos-core?branch=mainnet#9802bd084aadcd3565e95ca7f72ff940212875e5"
 dependencies = [
  "anyhow",
  "aptos-aggregator",
@@ -1448,7 +1447,7 @@ dependencies = [
 [[package]]
 name = "aptos-gas-algebra"
 version = "0.0.1"
-source = "git+https://github.com/sota-zk-labs/aptos-core#8ff89f03030d5642771f792828b756399ce19bc7"
+source = "git+https://github.com/aptos-labs/aptos-core?branch=mainnet#9802bd084aadcd3565e95ca7f72ff940212875e5"
 dependencies = [
  "either",
  "move-core-types",
@@ -1457,7 +1456,7 @@ dependencies = [
 [[package]]
 name = "aptos-gas-meter"
 version = "0.1.0"
-source = "git+https://github.com/sota-zk-labs/aptos-core#8ff89f03030d5642771f792828b756399ce19bc7"
+source = "git+https://github.com/aptos-labs/aptos-core?branch=mainnet#9802bd084aadcd3565e95ca7f72ff940212875e5"
 dependencies = [
  "aptos-gas-algebra",
  "aptos-gas-schedule",
@@ -1472,7 +1471,7 @@ dependencies = [
 [[package]]
 name = "aptos-gas-schedule"
 version = "0.1.0"
-source = "git+https://github.com/sota-zk-labs/aptos-core#8ff89f03030d5642771f792828b756399ce19bc7"
+source = "git+https://github.com/aptos-labs/aptos-core?branch=mainnet#9802bd084aadcd3565e95ca7f72ff940212875e5"
 dependencies = [
  "aptos-gas-algebra",
  "aptos-global-constants",
@@ -1485,17 +1484,17 @@ dependencies = [
 [[package]]
 name = "aptos-global-constants"
 version = "0.1.0"
-source = "git+https://github.com/sota-zk-labs/aptos-core#8ff89f03030d5642771f792828b756399ce19bc7"
+source = "git+https://github.com/aptos-labs/aptos-core?branch=mainnet#9802bd084aadcd3565e95ca7f72ff940212875e5"
 
 [[package]]
 name = "aptos-infallible"
 version = "0.1.0"
-source = "git+https://github.com/sota-zk-labs/aptos-core#8ff89f03030d5642771f792828b756399ce19bc7"
+source = "git+https://github.com/aptos-labs/aptos-core?branch=mainnet#9802bd084aadcd3565e95ca7f72ff940212875e5"
 
 [[package]]
 name = "aptos-ledger"
 version = "0.2.0"
-source = "git+https://github.com/sota-zk-labs/aptos-core#8ff89f03030d5642771f792828b756399ce19bc7"
+source = "git+https://github.com/aptos-labs/aptos-core?branch=mainnet#9802bd084aadcd3565e95ca7f72ff940212875e5"
 dependencies = [
  "aptos-crypto",
  "aptos-types",
@@ -1508,7 +1507,7 @@ dependencies = [
 [[package]]
 name = "aptos-log-derive"
 version = "0.1.0"
-source = "git+https://github.com/sota-zk-labs/aptos-core#8ff89f03030d5642771f792828b756399ce19bc7"
+source = "git+https://github.com/aptos-labs/aptos-core?branch=mainnet#9802bd084aadcd3565e95ca7f72ff940212875e5"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1518,7 +1517,7 @@ dependencies = [
 [[package]]
 name = "aptos-logger"
 version = "0.1.0"
-source = "git+https://github.com/sota-zk-labs/aptos-core#8ff89f03030d5642771f792828b756399ce19bc7"
+source = "git+https://github.com/aptos-labs/aptos-core?branch=mainnet#9802bd084aadcd3565e95ca7f72ff940212875e5"
 dependencies = [
  "aptos-infallible",
  "aptos-log-derive",
@@ -1542,7 +1541,7 @@ dependencies = [
 [[package]]
 name = "aptos-memory-usage-tracker"
 version = "0.1.0"
-source = "git+https://github.com/sota-zk-labs/aptos-core#8ff89f03030d5642771f792828b756399ce19bc7"
+source = "git+https://github.com/aptos-labs/aptos-core?branch=mainnet#9802bd084aadcd3565e95ca7f72ff940212875e5"
 dependencies = [
  "aptos-gas-algebra",
  "aptos-gas-meter",
@@ -1555,7 +1554,7 @@ dependencies = [
 [[package]]
 name = "aptos-metrics-core"
 version = "0.1.0"
-source = "git+https://github.com/sota-zk-labs/aptos-core#8ff89f03030d5642771f792828b756399ce19bc7"
+source = "git+https://github.com/aptos-labs/aptos-core?branch=mainnet#9802bd084aadcd3565e95ca7f72ff940212875e5"
 dependencies = [
  "anyhow",
  "prometheus",
@@ -1564,7 +1563,7 @@ dependencies = [
 [[package]]
 name = "aptos-move-stdlib"
 version = "0.1.1"
-source = "git+https://github.com/sota-zk-labs/aptos-core#8ff89f03030d5642771f792828b756399ce19bc7"
+source = "git+https://github.com/aptos-labs/aptos-core?branch=mainnet#9802bd084aadcd3565e95ca7f72ff940212875e5"
 dependencies = [
  "aptos-gas-schedule",
  "aptos-native-interface",
@@ -1579,7 +1578,7 @@ dependencies = [
 [[package]]
 name = "aptos-mvhashmap"
 version = "0.1.0"
-source = "git+https://github.com/sota-zk-labs/aptos-core#8ff89f03030d5642771f792828b756399ce19bc7"
+source = "git+https://github.com/aptos-labs/aptos-core?branch=mainnet#9802bd084aadcd3565e95ca7f72ff940212875e5"
 dependencies = [
  "anyhow",
  "aptos-aggregator",
@@ -1600,7 +1599,7 @@ dependencies = [
 [[package]]
 name = "aptos-native-interface"
 version = "0.1.0"
-source = "git+https://github.com/sota-zk-labs/aptos-core#8ff89f03030d5642771f792828b756399ce19bc7"
+source = "git+https://github.com/aptos-labs/aptos-core?branch=mainnet#9802bd084aadcd3565e95ca7f72ff940212875e5"
 dependencies = [
  "aptos-gas-algebra",
  "aptos-gas-schedule",
@@ -1617,7 +1616,7 @@ dependencies = [
 [[package]]
 name = "aptos-node-identity"
 version = "0.1.0"
-source = "git+https://github.com/sota-zk-labs/aptos-core#8ff89f03030d5642771f792828b756399ce19bc7"
+source = "git+https://github.com/aptos-labs/aptos-core?branch=mainnet#9802bd084aadcd3565e95ca7f72ff940212875e5"
 dependencies = [
  "anyhow",
  "aptos-types",
@@ -1628,7 +1627,7 @@ dependencies = [
 [[package]]
 name = "aptos-openapi"
 version = "0.1.0"
-source = "git+https://github.com/sota-zk-labs/aptos-core#8ff89f03030d5642771f792828b756399ce19bc7"
+source = "git+https://github.com/aptos-labs/aptos-core?branch=mainnet#9802bd084aadcd3565e95ca7f72ff940212875e5"
 dependencies = [
  "async-trait",
  "percent-encoding",
@@ -1641,7 +1640,7 @@ dependencies = [
 [[package]]
 name = "aptos-package-builder"
 version = "0.1.0"
-source = "git+https://github.com/sota-zk-labs/aptos-core#8ff89f03030d5642771f792828b756399ce19bc7"
+source = "git+https://github.com/aptos-labs/aptos-core?branch=mainnet#9802bd084aadcd3565e95ca7f72ff940212875e5"
 dependencies = [
  "anyhow",
  "aptos-framework",
@@ -1654,7 +1653,7 @@ dependencies = [
 [[package]]
 name = "aptos-protos"
 version = "1.3.0"
-source = "git+https://github.com/sota-zk-labs/aptos-core#8ff89f03030d5642771f792828b756399ce19bc7"
+source = "git+https://github.com/aptos-labs/aptos-core?branch=mainnet#9802bd084aadcd3565e95ca7f72ff940212875e5"
 dependencies = [
  "futures-core",
  "pbjson",
@@ -1666,7 +1665,7 @@ dependencies = [
 [[package]]
 name = "aptos-resource-viewer"
 version = "0.1.0"
-source = "git+https://github.com/sota-zk-labs/aptos-core#8ff89f03030d5642771f792828b756399ce19bc7"
+source = "git+https://github.com/aptos-labs/aptos-core?branch=mainnet#9802bd084aadcd3565e95ca7f72ff940212875e5"
 dependencies = [
  "anyhow",
  "aptos-types",
@@ -1680,7 +1679,7 @@ dependencies = [
 [[package]]
 name = "aptos-rest-client"
 version = "0.0.0"
-source = "git+https://github.com/sota-zk-labs/aptos-core#8ff89f03030d5642771f792828b756399ce19bc7"
+source = "git+https://github.com/aptos-labs/aptos-core?branch=mainnet#9802bd084aadcd3565e95ca7f72ff940212875e5"
 dependencies = [
  "anyhow",
  "aptos-api-types",
@@ -1703,7 +1702,7 @@ dependencies = [
 [[package]]
 name = "aptos-runtimes"
 version = "0.1.0"
-source = "git+https://github.com/sota-zk-labs/aptos-core#8ff89f03030d5642771f792828b756399ce19bc7"
+source = "git+https://github.com/aptos-labs/aptos-core?branch=mainnet#9802bd084aadcd3565e95ca7f72ff940212875e5"
 dependencies = [
  "rayon",
  "tokio",
@@ -1712,7 +1711,7 @@ dependencies = [
 [[package]]
 name = "aptos-scratchpad"
 version = "0.1.0"
-source = "git+https://github.com/sota-zk-labs/aptos-core#8ff89f03030d5642771f792828b756399ce19bc7"
+source = "git+https://github.com/aptos-labs/aptos-core?branch=mainnet#9802bd084aadcd3565e95ca7f72ff940212875e5"
 dependencies = [
  "aptos-crypto",
  "aptos-drop-helper",
@@ -1730,7 +1729,7 @@ dependencies = [
 [[package]]
 name = "aptos-sdk"
 version = "0.0.3"
-source = "git+https://github.com/sota-zk-labs/aptos-core#8ff89f03030d5642771f792828b756399ce19bc7"
+source = "git+https://github.com/aptos-labs/aptos-core?branch=mainnet#9802bd084aadcd3565e95ca7f72ff940212875e5"
 dependencies = [
  "anyhow",
  "aptos-cached-packages",
@@ -1742,6 +1741,7 @@ dependencies = [
  "base64 0.13.1",
  "bcs 0.1.4",
  "ed25519-dalek-bip32",
+ "hex",
  "move-core-types",
  "rand_core 0.5.1",
  "serde_json",
@@ -1751,7 +1751,7 @@ dependencies = [
 [[package]]
 name = "aptos-sdk-builder"
 version = "0.2.0"
-source = "git+https://github.com/sota-zk-labs/aptos-core#8ff89f03030d5642771f792828b756399ce19bc7"
+source = "git+https://github.com/aptos-labs/aptos-core?branch=mainnet#9802bd084aadcd3565e95ca7f72ff940212875e5"
 dependencies = [
  "anyhow",
  "aptos-types",
@@ -1769,7 +1769,7 @@ dependencies = [
 [[package]]
 name = "aptos-secure-net"
 version = "0.1.0"
-source = "git+https://github.com/sota-zk-labs/aptos-core#8ff89f03030d5642771f792828b756399ce19bc7"
+source = "git+https://github.com/aptos-labs/aptos-core?branch=mainnet#9802bd084aadcd3565e95ca7f72ff940212875e5"
 dependencies = [
  "aptos-logger",
  "aptos-metrics-core",
@@ -1787,7 +1787,7 @@ dependencies = [
 [[package]]
 name = "aptos-secure-storage"
 version = "0.1.0"
-source = "git+https://github.com/sota-zk-labs/aptos-core#8ff89f03030d5642771f792828b756399ce19bc7"
+source = "git+https://github.com/aptos-labs/aptos-core?branch=mainnet#9802bd084aadcd3565e95ca7f72ff940212875e5"
 dependencies = [
  "aptos-crypto",
  "aptos-infallible",
@@ -1808,7 +1808,7 @@ dependencies = [
 [[package]]
 name = "aptos-short-hex-str"
 version = "0.1.0"
-source = "git+https://github.com/sota-zk-labs/aptos-core#8ff89f03030d5642771f792828b756399ce19bc7"
+source = "git+https://github.com/aptos-labs/aptos-core?branch=mainnet#9802bd084aadcd3565e95ca7f72ff940212875e5"
 dependencies = [
  "mirai-annotations",
  "serde",
@@ -1819,7 +1819,7 @@ dependencies = [
 [[package]]
 name = "aptos-speculative-state-helper"
 version = "0.1.0"
-source = "git+https://github.com/sota-zk-labs/aptos-core#8ff89f03030d5642771f792828b756399ce19bc7"
+source = "git+https://github.com/aptos-labs/aptos-core?branch=mainnet#9802bd084aadcd3565e95ca7f72ff940212875e5"
 dependencies = [
  "anyhow",
  "aptos-infallible",
@@ -1830,7 +1830,7 @@ dependencies = [
 [[package]]
 name = "aptos-storage-interface"
 version = "0.1.0"
-source = "git+https://github.com/sota-zk-labs/aptos-core#8ff89f03030d5642771f792828b756399ce19bc7"
+source = "git+https://github.com/aptos-labs/aptos-core?branch=mainnet#9802bd084aadcd3565e95ca7f72ff940212875e5"
 dependencies = [
  "anyhow",
  "aptos-crypto",
@@ -1857,7 +1857,7 @@ dependencies = [
 [[package]]
 name = "aptos-table-natives"
 version = "0.1.0"
-source = "git+https://github.com/sota-zk-labs/aptos-core#8ff89f03030d5642771f792828b756399ce19bc7"
+source = "git+https://github.com/aptos-labs/aptos-core?branch=mainnet#9802bd084aadcd3565e95ca7f72ff940212875e5"
 dependencies = [
  "aptos-gas-schedule",
  "aptos-native-interface",
@@ -1875,7 +1875,7 @@ dependencies = [
 [[package]]
 name = "aptos-temppath"
 version = "0.1.0"
-source = "git+https://github.com/sota-zk-labs/aptos-core#8ff89f03030d5642771f792828b756399ce19bc7"
+source = "git+https://github.com/aptos-labs/aptos-core?branch=mainnet#9802bd084aadcd3565e95ca7f72ff940212875e5"
 dependencies = [
  "hex",
  "rand 0.7.3",
@@ -1884,6 +1884,7 @@ dependencies = [
 [[package]]
 name = "aptos-testcontainer"
 version = "0.1.0"
+source = "git+https://github.com/sota-zk-labs/aptos-testcontainer.git#88bf677d25976d340dc64d53d7c1cadd2271811d"
 dependencies = [
  "anyhow",
  "aptos-sdk",
@@ -1899,7 +1900,7 @@ dependencies = [
 [[package]]
 name = "aptos-time-service"
 version = "0.1.0"
-source = "git+https://github.com/sota-zk-labs/aptos-core#8ff89f03030d5642771f792828b756399ce19bc7"
+source = "git+https://github.com/aptos-labs/aptos-core?branch=mainnet#9802bd084aadcd3565e95ca7f72ff940212875e5"
 dependencies = [
  "aptos-infallible",
  "enum_dispatch",
@@ -1912,7 +1913,7 @@ dependencies = [
 [[package]]
 name = "aptos-types"
 version = "0.0.3"
-source = "git+https://github.com/sota-zk-labs/aptos-core#8ff89f03030d5642771f792828b756399ce19bc7"
+source = "git+https://github.com/aptos-labs/aptos-core?branch=mainnet#9802bd084aadcd3565e95ca7f72ff940212875e5"
 dependencies = [
  "anyhow",
  "aptos-bitvec",
@@ -1946,6 +1947,8 @@ dependencies = [
  "num-traits 0.2.19",
  "once_cell",
  "passkey-types",
+ "poem-openapi",
+ "poem-openapi-derive",
  "quick_cache",
  "rand 0.7.3",
  "rayon",
@@ -1965,12 +1968,12 @@ dependencies = [
 [[package]]
 name = "aptos-utils"
 version = "0.1.0"
-source = "git+https://github.com/sota-zk-labs/aptos-core#8ff89f03030d5642771f792828b756399ce19bc7"
+source = "git+https://github.com/aptos-labs/aptos-core?branch=mainnet#9802bd084aadcd3565e95ca7f72ff940212875e5"
 
 [[package]]
 name = "aptos-vault-client"
 version = "0.1.0"
-source = "git+https://github.com/sota-zk-labs/aptos-core#8ff89f03030d5642771f792828b756399ce19bc7"
+source = "git+https://github.com/aptos-labs/aptos-core?branch=mainnet#9802bd084aadcd3565e95ca7f72ff940212875e5"
 dependencies = [
  "aptos-crypto",
  "base64 0.13.1",
@@ -1986,7 +1989,7 @@ dependencies = [
 [[package]]
 name = "aptos-vm"
 version = "0.1.0"
-source = "git+https://github.com/sota-zk-labs/aptos-core#8ff89f03030d5642771f792828b756399ce19bc7"
+source = "git+https://github.com/aptos-labs/aptos-core?branch=mainnet#9802bd084aadcd3565e95ca7f72ff940212875e5"
 dependencies = [
  "anyhow",
  "aptos-aggregator",
@@ -2036,7 +2039,7 @@ dependencies = [
 [[package]]
 name = "aptos-vm-logging"
 version = "0.1.0"
-source = "git+https://github.com/sota-zk-labs/aptos-core#8ff89f03030d5642771f792828b756399ce19bc7"
+source = "git+https://github.com/aptos-labs/aptos-core?branch=mainnet#9802bd084aadcd3565e95ca7f72ff940212875e5"
 dependencies = [
  "aptos-crypto",
  "aptos-logger",
@@ -2051,7 +2054,7 @@ dependencies = [
 [[package]]
 name = "aptos-vm-types"
 version = "0.0.1"
-source = "git+https://github.com/sota-zk-labs/aptos-core#8ff89f03030d5642771f792828b756399ce19bc7"
+source = "git+https://github.com/aptos-labs/aptos-core?branch=mainnet#9802bd084aadcd3565e95ca7f72ff940212875e5"
 dependencies = [
  "anyhow",
  "aptos-aggregator",
@@ -2064,6 +2067,7 @@ dependencies = [
  "either",
  "move-binary-format",
  "move-core-types",
+ "move-vm-runtime",
  "move-vm-types",
  "rand 0.7.3",
  "serde",
@@ -7620,6 +7624,26 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "49f1f14873335454500d59611f1cf4a4b0f786f9ac11f4312a78e4cf2566695b"
 
 [[package]]
+name = "jemalloc-sys"
+version = "0.5.4+5.3.0-patched"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ac6c1946e1cea1788cbfde01c993b52a10e2da07f4bac608228d1bed20bfebf2"
+dependencies = [
+ "cc",
+ "libc",
+]
+
+[[package]]
+name = "jemallocator"
+version = "0.5.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a0de374a9f8e63150e6f5e8a60cc14c668226d7a347d8aee1a45766e3c4dd3bc"
+dependencies = [
+ "jemalloc-sys",
+ "libc",
+]
+
+[[package]]
 name = "jobserver"
 version = "0.1.31"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -8289,7 +8313,7 @@ checksum = "1fafa6961cabd9c63bcd77a45d7e3b7f3b552b70417831fb0f56db717e72407e"
 [[package]]
 name = "move-abigen"
 version = "0.1.0"
-source = "git+https://github.com/sota-zk-labs/aptos-core#8ff89f03030d5642771f792828b756399ce19bc7"
+source = "git+https://github.com/aptos-labs/aptos-core?branch=mainnet#9802bd084aadcd3565e95ca7f72ff940212875e5"
 dependencies = [
  "anyhow",
  "bcs 0.1.4",
@@ -8306,11 +8330,12 @@ dependencies = [
 [[package]]
 name = "move-binary-format"
 version = "0.0.3"
-source = "git+https://github.com/sota-zk-labs/aptos-core#8ff89f03030d5642771f792828b756399ce19bc7"
+source = "git+https://github.com/aptos-labs/aptos-core?branch=mainnet#9802bd084aadcd3565e95ca7f72ff940212875e5"
 dependencies = [
  "anyhow",
  "backtrace",
  "indexmap 1.9.3",
+ "move-bytecode-spec",
  "move-core-types",
  "ref-cast",
  "serde",
@@ -8320,12 +8345,12 @@ dependencies = [
 [[package]]
 name = "move-borrow-graph"
 version = "0.0.1"
-source = "git+https://github.com/sota-zk-labs/aptos-core#8ff89f03030d5642771f792828b756399ce19bc7"
+source = "git+https://github.com/aptos-labs/aptos-core?branch=mainnet#9802bd084aadcd3565e95ca7f72ff940212875e5"
 
 [[package]]
 name = "move-bytecode-source-map"
 version = "0.1.0"
-source = "git+https://github.com/sota-zk-labs/aptos-core#8ff89f03030d5642771f792828b756399ce19bc7"
+source = "git+https://github.com/aptos-labs/aptos-core?branch=mainnet#9802bd084aadcd3565e95ca7f72ff940212875e5"
 dependencies = [
  "anyhow",
  "bcs 0.1.4",
@@ -8338,9 +8363,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "move-bytecode-spec"
+version = "0.1.0"
+source = "git+https://github.com/aptos-labs/aptos-core?branch=mainnet#9802bd084aadcd3565e95ca7f72ff940212875e5"
+dependencies = [
+ "once_cell",
+ "quote",
+ "syn 1.0.109",
+]
+
+[[package]]
 name = "move-bytecode-utils"
 version = "0.1.0"
-source = "git+https://github.com/sota-zk-labs/aptos-core#8ff89f03030d5642771f792828b756399ce19bc7"
+source = "git+https://github.com/aptos-labs/aptos-core?branch=mainnet#9802bd084aadcd3565e95ca7f72ff940212875e5"
 dependencies = [
  "anyhow",
  "move-binary-format",
@@ -8352,7 +8387,7 @@ dependencies = [
 [[package]]
 name = "move-bytecode-verifier"
 version = "0.1.0"
-source = "git+https://github.com/sota-zk-labs/aptos-core#8ff89f03030d5642771f792828b756399ce19bc7"
+source = "git+https://github.com/aptos-labs/aptos-core?branch=mainnet#9802bd084aadcd3565e95ca7f72ff940212875e5"
 dependencies = [
  "fail",
  "move-binary-format",
@@ -8366,7 +8401,7 @@ dependencies = [
 [[package]]
 name = "move-bytecode-viewer"
 version = "0.1.0"
-source = "git+https://github.com/sota-zk-labs/aptos-core#8ff89f03030d5642771f792828b756399ce19bc7"
+source = "git+https://github.com/aptos-labs/aptos-core?branch=mainnet#9802bd084aadcd3565e95ca7f72ff940212875e5"
 dependencies = [
  "anyhow",
  "clap 4.5.13",
@@ -8381,7 +8416,7 @@ dependencies = [
 [[package]]
 name = "move-cli"
 version = "0.1.0"
-source = "git+https://github.com/sota-zk-labs/aptos-core#8ff89f03030d5642771f792828b756399ce19bc7"
+source = "git+https://github.com/aptos-labs/aptos-core?branch=mainnet#9802bd084aadcd3565e95ca7f72ff940212875e5"
 dependencies = [
  "anyhow",
  "clap 4.5.13",
@@ -8411,7 +8446,7 @@ dependencies = [
 [[package]]
 name = "move-command-line-common"
 version = "0.1.0"
-source = "git+https://github.com/sota-zk-labs/aptos-core#8ff89f03030d5642771f792828b756399ce19bc7"
+source = "git+https://github.com/aptos-labs/aptos-core?branch=mainnet#9802bd084aadcd3565e95ca7f72ff940212875e5"
 dependencies = [
  "anyhow",
  "difference",
@@ -8428,7 +8463,7 @@ dependencies = [
 [[package]]
 name = "move-compiler"
 version = "0.0.1"
-source = "git+https://github.com/sota-zk-labs/aptos-core#8ff89f03030d5642771f792828b756399ce19bc7"
+source = "git+https://github.com/aptos-labs/aptos-core?branch=mainnet#9802bd084aadcd3565e95ca7f72ff940212875e5"
 dependencies = [
  "anyhow",
  "bcs 0.1.4",
@@ -8454,7 +8489,7 @@ dependencies = [
 [[package]]
 name = "move-compiler-v2"
 version = "0.1.0"
-source = "git+https://github.com/sota-zk-labs/aptos-core#8ff89f03030d5642771f792828b756399ce19bc7"
+source = "git+https://github.com/aptos-labs/aptos-core?branch=mainnet#9802bd084aadcd3565e95ca7f72ff940212875e5"
 dependencies = [
  "abstract-domain-derive",
  "anyhow",
@@ -8485,7 +8520,7 @@ dependencies = [
 [[package]]
 name = "move-core-types"
 version = "0.0.4"
-source = "git+https://github.com/sota-zk-labs/aptos-core#8ff89f03030d5642771f792828b756399ce19bc7"
+source = "git+https://github.com/aptos-labs/aptos-core?branch=mainnet#9802bd084aadcd3565e95ca7f72ff940212875e5"
 dependencies = [
  "anyhow",
  "bcs 0.1.4",
@@ -8507,7 +8542,7 @@ dependencies = [
 [[package]]
 name = "move-coverage"
 version = "0.1.0"
-source = "git+https://github.com/sota-zk-labs/aptos-core#8ff89f03030d5642771f792828b756399ce19bc7"
+source = "git+https://github.com/aptos-labs/aptos-core?branch=mainnet#9802bd084aadcd3565e95ca7f72ff940212875e5"
 dependencies = [
  "anyhow",
  "bcs 0.1.4",
@@ -8526,7 +8561,7 @@ dependencies = [
 [[package]]
 name = "move-disassembler"
 version = "0.1.0"
-source = "git+https://github.com/sota-zk-labs/aptos-core#8ff89f03030d5642771f792828b756399ce19bc7"
+source = "git+https://github.com/aptos-labs/aptos-core?branch=mainnet#9802bd084aadcd3565e95ca7f72ff940212875e5"
 dependencies = [
  "anyhow",
  "clap 4.5.13",
@@ -8543,7 +8578,7 @@ dependencies = [
 [[package]]
 name = "move-docgen"
 version = "0.1.0"
-source = "git+https://github.com/sota-zk-labs/aptos-core#8ff89f03030d5642771f792828b756399ce19bc7"
+source = "git+https://github.com/aptos-labs/aptos-core?branch=mainnet#9802bd084aadcd3565e95ca7f72ff940212875e5"
 dependencies = [
  "anyhow",
  "clap 4.5.13",
@@ -8562,7 +8597,7 @@ dependencies = [
 [[package]]
 name = "move-errmapgen"
 version = "0.1.0"
-source = "git+https://github.com/sota-zk-labs/aptos-core#8ff89f03030d5642771f792828b756399ce19bc7"
+source = "git+https://github.com/aptos-labs/aptos-core?branch=mainnet#9802bd084aadcd3565e95ca7f72ff940212875e5"
 dependencies = [
  "anyhow",
  "move-command-line-common",
@@ -8574,7 +8609,7 @@ dependencies = [
 [[package]]
 name = "move-ir-to-bytecode"
 version = "0.1.0"
-source = "git+https://github.com/sota-zk-labs/aptos-core#8ff89f03030d5642771f792828b756399ce19bc7"
+source = "git+https://github.com/aptos-labs/aptos-core?branch=mainnet#9802bd084aadcd3565e95ca7f72ff940212875e5"
 dependencies = [
  "anyhow",
  "codespan-reporting",
@@ -8592,7 +8627,7 @@ dependencies = [
 [[package]]
 name = "move-ir-to-bytecode-syntax"
 version = "0.1.0"
-source = "git+https://github.com/sota-zk-labs/aptos-core#8ff89f03030d5642771f792828b756399ce19bc7"
+source = "git+https://github.com/aptos-labs/aptos-core?branch=mainnet#9802bd084aadcd3565e95ca7f72ff940212875e5"
 dependencies = [
  "anyhow",
  "hex",
@@ -8605,7 +8640,7 @@ dependencies = [
 [[package]]
 name = "move-ir-types"
 version = "0.1.0"
-source = "git+https://github.com/sota-zk-labs/aptos-core#8ff89f03030d5642771f792828b756399ce19bc7"
+source = "git+https://github.com/aptos-labs/aptos-core?branch=mainnet#9802bd084aadcd3565e95ca7f72ff940212875e5"
 dependencies = [
  "hex",
  "move-command-line-common",
@@ -8618,7 +8653,7 @@ dependencies = [
 [[package]]
 name = "move-model"
 version = "0.1.0"
-source = "git+https://github.com/sota-zk-labs/aptos-core#8ff89f03030d5642771f792828b756399ce19bc7"
+source = "git+https://github.com/aptos-labs/aptos-core?branch=mainnet#9802bd084aadcd3565e95ca7f72ff940212875e5"
 dependencies = [
  "anyhow",
  "codespan",
@@ -8644,7 +8679,7 @@ dependencies = [
 [[package]]
 name = "move-package"
 version = "0.1.0"
-source = "git+https://github.com/sota-zk-labs/aptos-core#8ff89f03030d5642771f792828b756399ce19bc7"
+source = "git+https://github.com/aptos-labs/aptos-core?branch=mainnet#9802bd084aadcd3565e95ca7f72ff940212875e5"
 dependencies = [
  "anyhow",
  "clap 4.5.13",
@@ -8678,7 +8713,7 @@ dependencies = [
 [[package]]
 name = "move-prover"
 version = "0.1.0"
-source = "git+https://github.com/sota-zk-labs/aptos-core#8ff89f03030d5642771f792828b756399ce19bc7"
+source = "git+https://github.com/aptos-labs/aptos-core?branch=mainnet#9802bd084aadcd3565e95ca7f72ff940212875e5"
 dependencies = [
  "anyhow",
  "atty",
@@ -8705,7 +8740,7 @@ dependencies = [
 [[package]]
 name = "move-prover-boogie-backend"
 version = "0.1.0"
-source = "git+https://github.com/sota-zk-labs/aptos-core#8ff89f03030d5642771f792828b756399ce19bc7"
+source = "git+https://github.com/aptos-labs/aptos-core?branch=mainnet#9802bd084aadcd3565e95ca7f72ff940212875e5"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -8734,7 +8769,7 @@ dependencies = [
 [[package]]
 name = "move-prover-bytecode-pipeline"
 version = "0.1.0"
-source = "git+https://github.com/sota-zk-labs/aptos-core#8ff89f03030d5642771f792828b756399ce19bc7"
+source = "git+https://github.com/aptos-labs/aptos-core?branch=mainnet#9802bd084aadcd3565e95ca7f72ff940212875e5"
 dependencies = [
  "abstract-domain-derive",
  "anyhow",
@@ -8751,7 +8786,7 @@ dependencies = [
 [[package]]
 name = "move-resource-viewer"
 version = "0.1.0"
-source = "git+https://github.com/sota-zk-labs/aptos-core#8ff89f03030d5642771f792828b756399ce19bc7"
+source = "git+https://github.com/aptos-labs/aptos-core?branch=mainnet#9802bd084aadcd3565e95ca7f72ff940212875e5"
 dependencies = [
  "anyhow",
  "hex",
@@ -8764,7 +8799,7 @@ dependencies = [
 [[package]]
 name = "move-stackless-bytecode"
 version = "0.1.0"
-source = "git+https://github.com/sota-zk-labs/aptos-core#8ff89f03030d5642771f792828b756399ce19bc7"
+source = "git+https://github.com/aptos-labs/aptos-core?branch=mainnet#9802bd084aadcd3565e95ca7f72ff940212875e5"
 dependencies = [
  "abstract-domain-derive",
  "codespan-reporting",
@@ -8783,7 +8818,7 @@ dependencies = [
 [[package]]
 name = "move-stdlib"
 version = "0.1.1"
-source = "git+https://github.com/sota-zk-labs/aptos-core#8ff89f03030d5642771f792828b756399ce19bc7"
+source = "git+https://github.com/aptos-labs/aptos-core?branch=mainnet#9802bd084aadcd3565e95ca7f72ff940212875e5"
 dependencies = [
  "anyhow",
  "hex",
@@ -8806,7 +8841,7 @@ dependencies = [
 [[package]]
 name = "move-symbol-pool"
 version = "0.1.0"
-source = "git+https://github.com/sota-zk-labs/aptos-core#8ff89f03030d5642771f792828b756399ce19bc7"
+source = "git+https://github.com/aptos-labs/aptos-core?branch=mainnet#9802bd084aadcd3565e95ca7f72ff940212875e5"
 dependencies = [
  "once_cell",
  "serde",
@@ -8815,7 +8850,7 @@ dependencies = [
 [[package]]
 name = "move-table-extension"
 version = "0.1.0"
-source = "git+https://github.com/sota-zk-labs/aptos-core#8ff89f03030d5642771f792828b756399ce19bc7"
+source = "git+https://github.com/aptos-labs/aptos-core?branch=mainnet#9802bd084aadcd3565e95ca7f72ff940212875e5"
 dependencies = [
  "better_any",
  "bytes",
@@ -8830,7 +8865,7 @@ dependencies = [
 [[package]]
 name = "move-unit-test"
 version = "0.1.0"
-source = "git+https://github.com/sota-zk-labs/aptos-core#8ff89f03030d5642771f792828b756399ce19bc7"
+source = "git+https://github.com/aptos-labs/aptos-core?branch=mainnet#9802bd084aadcd3565e95ca7f72ff940212875e5"
 dependencies = [
  "anyhow",
  "better_any",
@@ -8858,7 +8893,7 @@ dependencies = [
 [[package]]
 name = "move-vm-runtime"
 version = "0.1.0"
-source = "git+https://github.com/sota-zk-labs/aptos-core#8ff89f03030d5642771f792828b756399ce19bc7"
+source = "git+https://github.com/aptos-labs/aptos-core?branch=mainnet#9802bd084aadcd3565e95ca7f72ff940212875e5"
 dependencies = [
  "better_any",
  "bytes",
@@ -8882,7 +8917,7 @@ dependencies = [
 [[package]]
 name = "move-vm-test-utils"
 version = "0.1.0"
-source = "git+https://github.com/sota-zk-labs/aptos-core#8ff89f03030d5642771f792828b756399ce19bc7"
+source = "git+https://github.com/aptos-labs/aptos-core?branch=mainnet#9802bd084aadcd3565e95ca7f72ff940212875e5"
 dependencies = [
  "anyhow",
  "bytes",
@@ -8897,7 +8932,7 @@ dependencies = [
 [[package]]
 name = "move-vm-types"
 version = "0.1.0"
-source = "git+https://github.com/sota-zk-labs/aptos-core#8ff89f03030d5642771f792828b756399ce19bc7"
+source = "git+https://github.com/aptos-labs/aptos-core?branch=mainnet#9802bd084aadcd3565e95ca7f72ff940212875e5"
 dependencies = [
  "bcs 0.1.4",
  "derivative",
@@ -9255,17 +9290,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5c7398b9c8b70908f6371f47ed36737907c87c52af34c268fed0bf0ceb92ead9"
 dependencies = [
  "libc",
-]
-
-[[package]]
-name = "number_range"
-version = "0.3.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "60080faccd4ca50ad0b801b2be686136376b13f691f6eac84817e40973b2e1bb"
-dependencies = [
- "anyhow",
- "itertools 0.10.5",
- "num",
 ]
 
 [[package]]
@@ -13189,26 +13213,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "tikv-jemalloc-sys"
-version = "0.5.4+5.3.0-patched"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9402443cb8fd499b6f327e40565234ff34dbda27460c5b47db0db77443dd85d1"
-dependencies = [
- "cc",
- "libc",
-]
-
-[[package]]
-name = "tikv-jemallocator"
-version = "0.5.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "965fe0c26be5c56c94e38ba547249074803efd52adfb66de62107d95aab3eaca"
-dependencies = [
- "libc",
- "tikv-jemalloc-sys",
-]
-
-[[package]]
 name = "time"
 version = "0.3.36"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -14649,7 +14653,7 @@ dependencies = [
 [[package]]
 name = "x25519-dalek"
 version = "1.2.0"
-source = "git+https://github.com/Tranduy1dol/x25519-dalek?branch=zeroize_v1.7#d98aca90959611359089b2194874faa200d55977"
+source = "git+https://github.com/Tranduy1dol/x25519-dalek#b9cdbaf36bf2a83438d9f660e5a708c82ed60d8e"
 dependencies = [
  "curve25519-dalek",
  "rand_core 0.5.1",
