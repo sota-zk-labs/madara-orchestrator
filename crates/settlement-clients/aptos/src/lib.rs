@@ -7,12 +7,12 @@ use aptos_sdk::move_types::account_address::AccountAddress;
 use aptos_sdk::move_types::identifier::Identifier;
 use aptos_sdk::move_types::language_storage::ModuleId;
 use aptos_sdk::move_types::u256::U256;
-use aptos_sdk::move_types::value::{MoveValue, serialize_values};
+use aptos_sdk::move_types::value::{serialize_values, MoveValue};
 use aptos_sdk::rest_client::aptos_api_types::{EntryFunctionId, ViewRequest};
 use aptos_sdk::rest_client::Client;
 use aptos_sdk::types::chain_id::ChainId;
-use aptos_sdk::types::LocalAccount;
 use aptos_sdk::types::transaction::{EntryFunction, TransactionPayload};
+use aptos_sdk::types::LocalAccount;
 use async_trait::async_trait;
 use color_eyre::eyre;
 use mockall::automock;
@@ -56,20 +56,6 @@ impl SettlementClient for AptosSettlementClient {
         unimplemented!("hee-hee")
     }
 
-    #[allow(unused)]
-    async fn update_state_with_blobs(
-        &self,
-        program_output: Vec<[u8; 32]>,
-        state_diff: Vec<Vec<u8>>,
-    ) -> color_eyre::Result<String> {
-        unimplemented!("hee-hee")
-    }
-
-    #[allow(unused)]
-    async fn wait_for_tx_finality(&self, tx_hash: &str) -> color_eyre::Result<()> {
-        unimplemented!("hee-hee")
-    }
-
     async fn update_state_calldata(
         &self,
         program_output: Vec<[u8; 32]>,
@@ -107,6 +93,15 @@ impl SettlementClient for AptosSettlementClient {
         Ok(tx.transaction_info().unwrap().hash.to_string())
     }
 
+    #[allow(unused)]
+    async fn update_state_with_blobs(
+        &self,
+        program_output: Vec<[u8; 32]>,
+        state_diff: Vec<Vec<u8>>,
+    ) -> color_eyre::Result<String> {
+        unimplemented!("hee-hee")
+    }
+
     async fn update_state_blobs(
         &self,
         program_output: Vec<[u8; 32]>,
@@ -142,7 +137,7 @@ impl SettlementClient for AptosSettlementClient {
     async fn verify_tx_inclusion(&self, tx_hash: &str) -> eyre::Result<SettlementVerificationStatus> {
         let client = self.client.clone();
 
-        let hash = HashValue::from_str(tx_hash.strip_prefix("0x").expect("Hash bullshit!")).unwrap();
+        let hash = HashValue::from_str(tx_hash.strip_prefix("0x").unwrap())?;
         let txn = client.get_transaction_by_hash(hash).await?;
 
         let response = txn.into_inner();
@@ -150,6 +145,11 @@ impl SettlementClient for AptosSettlementClient {
             true => Ok(SettlementVerificationStatus::Verified),
             false => Ok(SettlementVerificationStatus::Rejected(format!("Transaction {} have been rejected.", tx_hash))),
         }
+    }
+
+    #[allow(unused)]
+    async fn wait_for_tx_finality(&self, tx_hash: &str) -> color_eyre::Result<()> {
+        unimplemented!("hee-hee")
     }
 
     async fn get_last_settled_block(&self) -> eyre::Result<u64> {
@@ -171,8 +171,7 @@ impl SettlementClient for AptosSettlementClient {
         let response = client.view(&request, None).await?.into_inner();
 
         let block_number = response.first().unwrap().as_str().unwrap();
-        eprintln!("block_number = {:#?}", block_number);
-        Ok(block_number.parse::<u64>().unwrap())
+        Ok(block_number.parse::<u64>()?)
     }
 }
 
@@ -187,9 +186,9 @@ mod test {
 
     use settlement_client_interface::{SettlementClient, SettlementVerificationStatus};
 
-    use crate::{AptosSettlementClient, STARKNET_VALIDITY};
     use crate::config::AptosSettlementConfig;
     use crate::helper::build_transaction;
+    use crate::{AptosSettlementClient, STARKNET_VALIDITY};
 
     use super::*;
 
@@ -297,6 +296,9 @@ mod test {
                 let verify_inclusion = settlement_client.verify_tx_inclusion(result.as_str()).await.unwrap();
                 eprintln!("verify_inclusion = {:#?}", verify_inclusion);
                 assert_eq!(verify_inclusion, SettlementVerificationStatus::Verified);
+
+                let block_number = settlement_client.get_last_settled_block().await.unwrap();
+                eprintln!("block_number = {:#?}", block_number);
                 Ok(())
             })
         })
