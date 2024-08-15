@@ -1,18 +1,18 @@
 [workspace]
 resolver = "2"
 members = [
-    "crates/orchestrator",
-    "crates/da-clients/da-client-interface",
-    "crates/da-clients/ethereum",
-    "crates/prover-services/prover-client-interface",
-    "crates/prover-services/gps-fact-checker",
-    "crates/prover-services/sharp-service",
-    "crates/utils",
-    "crates/settlement-clients/settlement-client-interface",
-    "crates/settlement-clients/ethereum",
-    "crates/settlement-clients/starknet",
-    "e2e-tests",
-    "crates/settlement-clients/aptos",
+  "crates/orchestrator",
+  "crates/da-clients/da-client-interface",
+  "crates/da-clients/ethereum",
+  "crates/prover-services/prover-client-interface",
+  "crates/prover-services/gps-fact-checker",
+  "crates/prover-services/sharp-service",
+  "crates/utils",
+  "crates/settlement-clients/settlement-client-interface",
+  "crates/settlement-clients/ethereum",
+  "crates/settlement-clients/starknet",
+  "crates/settlement-clients/aptos",
+  "e2e-tests",
 ]
 
 [workspace.package]
@@ -55,15 +55,16 @@ arc-swap = { version = "1.7.1" }
 num-traits = "0.2"
 lazy_static = "1.4.0"
 stark_evm_adapter = "0.1.1"
-hex = "0.4"
+hex = "0.4.3"
 itertools = "0.13.0"
 mockall = "0.13.0"
 testcontainers = "0.21.1"
+once_cell = "1.19.0"
 
 # Cairo VM
 cairo-vm = { version = "1.0.0-rc5", features = [
-    "extensive_hints",
-    "cairo-1-hints",
+  "extensive_hints",
+  "cairo-1-hints",
 ] }
 
 # TODO: we currently use the Moonsong fork & the os-output-serde branch so we
@@ -91,6 +92,9 @@ sharp-service = { path = "crates/prover-services/sharp-service" }
 orchestrator = { path = "crates/orchestrator" }
 
 aptos-sdk = { git = "https://github.com/aptos-labs/aptos-core" }
+aptos-testcontainer = { git = "https://github.com/sota-zk-labs/aptos-testcontainer", branch = "master", features = [
+  "testing",
+] }
 
 [patch.crates-io]
 merlin = { git = "https://github.com/aptos-labs/merlin" }
