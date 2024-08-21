@@ -31,7 +31,9 @@ pub fn get_fact_info(cairo_pie: &CairoPie, program_hash: Option<Felt>) -> Result
     let fact_topology = get_fact_topology(cairo_pie, program_output.len())?;
     let program_hash = match program_hash {
         Some(hash) => hash,
-        None => Felt::from_bytes_be(&compute_program_hash_chain(&cairo_pie.metadata.program, BOOTLOADER_VERSION)?.to_bytes_be()),
+        None => Felt::from_bytes_be(
+            &compute_program_hash_chain(&cairo_pie.metadata.program, BOOTLOADER_VERSION)?.to_bytes_be(),
+        ),
     };
     let output_root = generate_merkle_root(&program_output, &fact_topology)?;
     let fact = keccak256([program_hash.to_bytes_be(), *output_root.node_hash].concat());

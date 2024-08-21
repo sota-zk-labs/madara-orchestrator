@@ -1,8 +1,5 @@
 use std::sync::Arc;
 
-use crate::data_storage::aws_s3::config::{AWSS3Config, AWSS3ConfigType};
-use crate::data_storage::aws_s3::AWSS3;
-use crate::data_storage::{DataStorage, DataStorageConfig};
 use arc_swap::{ArcSwap, Guard};
 use da_client_interface::{DaClient, DaConfig};
 use dotenvy::dotenv;
@@ -19,6 +16,9 @@ use utils::env_utils::get_env_var_or_panic;
 use utils::settings::default::DefaultSettingsProvider;
 use utils::settings::SettingsProvider;
 
+use crate::data_storage::aws_s3::config::{AWSS3Config, AWSS3ConfigType};
+use crate::data_storage::aws_s3::AWSS3;
+use crate::data_storage::{DataStorage, DataStorageConfig};
 use crate::database::mongodb::config::MongoDbConfig;
 use crate::database::mongodb::MongoDb;
 use crate::database::{Database, DatabaseConfig};

@@ -15,11 +15,10 @@ use starknet::providers::Provider;
 use tracing::log;
 use uuid::Uuid;
 
+use super::types::{JobItem, JobStatus, JobType, JobVerificationStatus};
+use super::Job;
 use crate::config::Config;
 use crate::constants::BLOB_DATA_FILE_NAME;
-
-use super::Job;
-use super::types::{JobItem, JobStatus, JobType, JobVerificationStatus};
 
 lazy_static! {
     /// EIP-4844 BLS12-381 modulus.
@@ -201,11 +200,7 @@ fn data_to_blobs(blob_size: u64, block_data: Vec<BigUint>) -> Result<Vec<Vec<u8>
     Ok(blobs)
 }
 
-async fn state_update_to_blob_data(
-    block_no: u64,
-    state_update: StateUpdate,
-    config: &Config,
-) -> Result<Vec<Felt>> {
+async fn state_update_to_blob_data(block_no: u64, state_update: StateUpdate, config: &Config) -> Result<Vec<Felt>> {
     let state_diff = state_update.state_diff;
     let mut blob_data: Vec<Felt> = vec![
         Felt::from(state_diff.storage_diffs.len()),
@@ -320,7 +315,12 @@ fn da_word(class_flag: bool, nonce_change: Option<Felt>, num_changes: u64) -> Fe
 
     // checking for nonce here
     if let Some(_new_nonce) = nonce_change {
-        let bytes: [u8; 32] = nonce_change.expect("Not able to convert the nonce_change var into [u8; 32] type. Possible Error : Improper parameter length.").to_bytes_be();
+        let bytes: [u8; 32] = nonce_change
+            .expect(
+                "Not able to convert the nonce_change var into [u8; 32] type. Possible Error : Improper parameter \
+                 length.",
+            )
+            .to_bytes_be();
         let biguint = BigUint::from_bytes_be(&bytes);
         let binary_string_local = format!("{:b}", biguint);
         let padded_binary_string = format!("{:0>64}", binary_string_local);
@@ -357,11 +357,10 @@ mod tests {
     use rstest::rstest;
     use serde_json::json;
 
+    use super::*;
     // use majin_blob_types::serde;
     use crate::data_storage::MockDataStorage;
     use crate::tests::common::init_config;
-
-    use super::*;
 
     #[rstest]
     #[case(false, 1, 1, "18446744073709551617")]
@@ -382,22 +381,22 @@ mod tests {
 
     #[rstest]
     #[case(
-    631861,
-    "src/jobs/da_job/test_data/state_update_from_block_631861.txt",
-    "src/jobs/da_job/test_data/test_blob_631861.txt",
-    "src/jobs/da_job/test_data/nonces_from_block_631861.txt"
+        631861,
+        "src/jobs/da_job/test_data/state_update_from_block_631861.txt",
+        "src/jobs/da_job/test_data/test_blob_631861.txt",
+        "src/jobs/da_job/test_data/nonces_from_block_631861.txt"
     )]
     #[case(
-    638353,
-    "src/jobs/da_job/test_data/state_update_from_block_638353.txt",
-    "src/jobs/da_job/test_data/test_blob_638353.txt",
-    "src/jobs/da_job/test_data/nonces_from_block_638353.txt"
+        638353,
+        "src/jobs/da_job/test_data/state_update_from_block_638353.txt",
+        "src/jobs/da_job/test_data/test_blob_638353.txt",
+        "src/jobs/da_job/test_data/nonces_from_block_638353.txt"
     )]
     #[case(
-    640641,
-    "src/jobs/da_job/test_data/state_update_from_block_640641.txt",
-    "src/jobs/da_job/test_data/test_blob_640641.txt",
-    "src/jobs/da_job/test_data/nonces_from_block_640641.txt"
+        640641,
+        "src/jobs/da_job/test_data/state_update_from_block_640641.txt",
+        "src/jobs/da_job/test_data/test_blob_640641.txt",
+        "src/jobs/da_job/test_data/nonces_from_block_640641.txt"
     )]
     #[tokio::test]
     async fn test_state_update_to_blob_data(
@@ -426,7 +425,7 @@ mod tests {
             None,
             Some(storage_client),
         )
-            .await;
+        .await;
 
         get_nonce_attached(&server, nonce_file_path);
 
@@ -523,10 +522,6 @@ mod tests {
         new_hex_chars = new_hex_chars.trim_start_matches('0').to_string();
 
         // Handle the case where the trimmed string is empty (e.g., data was all zeros)
-        if new_hex_chars.is_empty() {
-            "0x0".to_string()
-        } else {
-            format!("0x{}", new_hex_chars)
-        }
+        if new_hex_chars.is_empty() { "0x0".to_string() } else { format!("0x{}", new_hex_chars) }
     }
 }

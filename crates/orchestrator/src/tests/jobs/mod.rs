@@ -7,11 +7,11 @@ pub mod proving_job;
 #[cfg(test)]
 pub mod state_update_job;
 
-use assert_matches::assert_matches;
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::Duration;
 
+use assert_matches::assert_matches;
 use mockall::predicate::eq;
 use mongodb::bson::doc;
 use omniqueue::QueueError;

@@ -1,5 +1,4 @@
 use dotenvy::dotenv;
-
 use settlement_client_interface::SettlementConfig;
 use utils::env_utils::get_env_var_or_panic;
 

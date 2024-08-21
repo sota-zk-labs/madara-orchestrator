@@ -13,8 +13,12 @@ async-trait = { workspace = true }
 color-eyre = { workspace = true }
 dotenvy = { workspace = true }
 hex = { workspace = true }
+log = { workspace = true }
 mockall = { workspace = true }
 once_cell = { workspace = true }
 settlement-client-interface = { workspace = true }
 tokio = { workspace = true }
 utils = { workspace = true }
+
+[dev-dependencies]
+test-log = { workspace = true }

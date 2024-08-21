@@ -16,7 +16,6 @@ use aptos_sdk::types::LocalAccount;
 use async_trait::async_trait;
 use color_eyre::eyre;
 use mockall::automock;
-
 use settlement_client_interface::{SettlementClient, SettlementVerificationStatus};
 
 use crate::config::AptosSettlementConfig;
@@ -89,8 +88,14 @@ impl SettlementClient for AptosSettlementClient {
             .await
             .expect("Failed to submit update state transaction")
             .into_inner();
+        let transaction_info = tx.transaction_info().unwrap();
+        log::info!(
+            "update_state_calldata finished: hash={}; gas={}",
+            transaction_info.hash.to_string(),
+            transaction_info.gas_used
+        );
 
-        Ok(tx.transaction_info().unwrap().hash.to_string())
+        Ok(transaction_info.hash.to_string())
     }
 
     #[allow(unused)]
@@ -131,7 +136,14 @@ impl SettlementClient for AptosSettlementClient {
             .expect("Failed to submit update state transaction")
             .into_inner();
 
-        Ok(tx.transaction_info().unwrap().hash.to_string())
+        let transaction_info = tx.transaction_info().unwrap();
+        log::info!(
+            "update_state_blobs finished: hash={}; gas={}",
+            transaction_info.hash.to_string(),
+            transaction_info.gas_used
+        );
+
+        Ok(transaction_info.hash.to_string())
     }
 
     async fn verify_tx_inclusion(&self, tx_hash: &str) -> eyre::Result<SettlementVerificationStatus> {
@@ -183,8 +195,8 @@ mod test {
     use aptos_sdk::move_types::u256;
     use aptos_sdk::types::chain_id::NamedChain::TESTING;
     use aptos_testcontainer::test_utils::aptos_container_test_utils::{lazy_aptos_container, run};
-
     use settlement_client_interface::{SettlementClient, SettlementVerificationStatus};
+    use test_log::test;
 
     use crate::config::AptosSettlementConfig;
     use crate::helper::build_transaction;
@@ -214,7 +226,13 @@ mod test {
             ),
         ));
         let tx = build_transaction(payload, &settlement_client.account, settlement_client.chain_id);
-        settlement_client.client.submit_and_wait(&tx).await.expect("Failed to init state!");
+        let tx = settlement_client.client.submit_and_wait(&tx).await.expect("Failed to init state!").into_inner();
+        let transaction_info = tx.transaction_info().unwrap();
+        log::info!(
+            "update_state_blobs finished: hash={}; gas={}",
+            transaction_info.hash.to_string(),
+            transaction_info.gas_used
+        );
     }
 
     async fn aptos_fact_registry(settlement_client: &AptosSettlementClient, fact: &str) {
@@ -225,10 +243,16 @@ mod test {
             serialize_values(vec![&MoveValue::vector_u8(hex::decode(fact).unwrap())].into_iter()),
         ));
         let tx = build_transaction(payload, &settlement_client.account, settlement_client.chain_id);
-        settlement_client.client.submit_and_wait(&tx).await.expect("Failed to registry fact!");
+        let tx = settlement_client.client.submit_and_wait(&tx).await.expect("Failed to registry fact!").into_inner();
+        let transaction_info = tx.transaction_info().unwrap();
+        log::info!(
+            "update_state_blobs finished: hash={}; gas={}",
+            transaction_info.hash.to_string(),
+            transaction_info.gas_used
+        );
     }
 
-    #[tokio::test]
+    #[test(tokio::test)]
     async fn test_update_state_calldata() -> anyhow::Result<()> {
         run(1, |accounts| {
             Box::pin(async move {
@@ -291,14 +315,14 @@ mod test {
                     .update_state_calldata(program_output, onchain_data_hash, onchain_data_size)
                     .await
                     .expect("Failed to submit blob!");
-                eprintln!("result = {:#?}", result);
+                log::info!("result = {:#?}", result);
 
                 let verify_inclusion = settlement_client.verify_tx_inclusion(result.as_str()).await.unwrap();
-                eprintln!("verify_inclusion = {:#?}", verify_inclusion);
+                log::info!("verify_inclusion = {:#?}", verify_inclusion);
                 assert_eq!(verify_inclusion, SettlementVerificationStatus::Verified);
 
                 let block_number = settlement_client.get_last_settled_block().await.unwrap();
-                eprintln!("block_number = {:#?}", block_number);
+                log::info!("block_number = {:#?}", block_number);
                 Ok(())
             })
         })
