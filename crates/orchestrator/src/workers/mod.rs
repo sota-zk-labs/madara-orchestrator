@@ -7,6 +7,11 @@ use thiserror::Error;
 use crate::config::Config;
 use crate::jobs::types::JobStatus;
 
+use async_trait::async_trait;
+
+use crate::config::config;
+use crate::jobs::types::JobStatus;
+
 pub mod data_submission_worker;
 pub mod proof_registration;
 pub mod proving;

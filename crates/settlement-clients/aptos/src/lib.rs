@@ -254,8 +254,6 @@ mod test {
     use crate::helper::build_transaction;
     use crate::{AptosSettlementClient, STARKNET_VALIDITY};
 
-    use super::*;
-
     const REGISTER_FACT: &str = "register_fact";
     const FACT_REGISTRY: &str = "fact_registry";
     const INIT_CONTRACT_STATE: &str = "initialize_contract_state";
