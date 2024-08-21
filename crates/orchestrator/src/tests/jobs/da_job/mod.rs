@@ -11,7 +11,7 @@ use da_client_interface::MockDaClient;
 use mockall::predicate::always;
 use rstest::rstest;
 use serde_json::json;
-use starknet_core::types::{FieldElement, MaybePendingStateUpdate, PendingStateUpdate, StateDiff};
+use starknet::core::types::{Felt, MaybePendingStateUpdate, PendingStateUpdate, StateDiff};
 use std::collections::HashMap;
 use uuid::Uuid;
 
@@ -96,7 +96,7 @@ async fn test_da_job_process_job_failure_on_pending_block() {
     let internal_id = "1";
 
     let pending_state_update = MaybePendingStateUpdate::PendingUpdate(PendingStateUpdate {
-        old_root: FieldElement::default(),
+        old_root: Felt::default(),
         state_diff: StateDiff {
             storage_diffs: vec![],
             deprecated_declared_classes: vec![],
