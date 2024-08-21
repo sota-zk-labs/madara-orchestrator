@@ -11,6 +11,7 @@ members = [
   "crates/settlement-clients/settlement-client-interface",
   "crates/settlement-clients/ethereum",
   "crates/settlement-clients/starknet",
+  "crates/settlement-clients/aptos",
   "e2e-tests",
 ]
 
@@ -50,6 +51,7 @@ futures = "0.3.30"
 log = "0.4.21"
 mongodb = { version = "2.8.1", features = ["bson-chrono-0_4"] }
 omniqueue = { version = "0.2.0" }
+once_cell = "1.19.0"
 reqwest = { version = "0.12.7", features = [
   "rustls-tls",
   "native-tls",
@@ -120,12 +122,21 @@ madara-prover-rpc-client = { git = "https://github.com/Moonsong-Labs/madara-prov
 da-client-interface = { path = "crates/da-clients/da-client-interface" }
 ethereum-da-client = { path = "crates/da-clients/ethereum" }
 
-settlement-client-interface = { path = "crates/settlement-clients/settlement-client-interface" }
 ethereum-settlement-client = { path = "crates/settlement-clients/ethereum" }
+settlement-client-interface = { path = "crates/settlement-clients/settlement-client-interface" }
 starknet-settlement-client = { path = "crates/settlement-clients/starknet" }
 
-utils = { path = "crates/utils" }
-prover-client-interface = { path = "crates/prover-services/prover-client-interface" }
 gps-fact-checker = { path = "crates/prover-services/gps-fact-checker" }
-sharp-service = { path = "crates/prover-services/sharp-service" }
 orchestrator = { path = "crates/orchestrator" }
+prover-client-interface = { path = "crates/prover-services/prover-client-interface" }
+sharp-service = { path = "crates/prover-services/sharp-service" }
+utils = { path = "crates/utils" }
+
+aptos-sdk = { git = "https://github.com/aptos-labs/aptos-core" }
+aptos-testcontainer = { git = "https://github.com/sota-zk-labs/aptos-testcontainer", branch = "master", features = [
+  "testing",
+] }
+
+[patch.crates-io]
+merlin = { git = "https://github.com/aptos-labs/merlin" }
+x25519-dalek = { git = "https://github.com/Tranduy1dol/x25519-dalek", branch = "zeroize_v1.7" }

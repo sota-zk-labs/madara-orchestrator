@@ -39,7 +39,7 @@ futures = { workspace = true }
 hex = { workspace = true }
 itertools = { workspace = true }
 lazy_static = { workspace = true }
-log = "0.4.21"
+log = { workspace = true }
 majin-blob-core = { git = "https://github.com/AbdelStark/majin-blob", branch = "main" }
 majin-blob-types = { git = "https://github.com/AbdelStark/majin-blob", branch = "main" }
 mockall = { workspace = true }
@@ -94,6 +94,8 @@ with_sqs = ["omniqueue"]
 testing = []
 
 [dev-dependencies]
+assert_matches = "1.5.0"
+httpmock = { workspace = true, features = ["remote"] }
 hyper = { version = "0.14", features = ["full"] }
 rstest = { workspace = true }
 httpmock = { workspace = true, features = ["remote"] }
