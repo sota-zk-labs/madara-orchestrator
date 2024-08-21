@@ -22,6 +22,7 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::Duration;
 
+use assert_matches::assert_matches;
 use mockall::predicate::eq;
 use mongodb::bson::doc;
 use omniqueue::QueueError;

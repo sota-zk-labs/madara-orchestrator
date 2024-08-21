@@ -8,7 +8,7 @@ use color_eyre::eyre::WrapErr;
 use lazy_static::lazy_static;
 use num_bigint::{BigUint, ToBigUint};
 use num_traits::{Num, Zero};
-use starknet::core::types::{BlockId, FieldElement, MaybePendingStateUpdate, StateUpdate, StorageEntry};
+use starknet::core::types::{BlockId, Felt, MaybePendingStateUpdate, StateUpdate, StorageEntry};
 use starknet::providers::Provider;
 use thiserror::Error;
 use tracing::log;
