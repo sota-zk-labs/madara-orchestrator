@@ -4,6 +4,7 @@ members = [
   "crates/orchestrator",
   "crates/da-clients/da-client-interface",
   "crates/da-clients/ethereum",
+  "crates/da-clients/aptos",
   "crates/prover-services/prover-client-interface",
   "crates/prover-services/gps-fact-checker",
   "crates/prover-services/sharp-service",
@@ -11,6 +12,7 @@ members = [
   "crates/settlement-clients/settlement-client-interface",
   "crates/settlement-clients/ethereum",
   "crates/settlement-clients/starknet",
+  "crates/settlement-clients/aptos",
   "e2e-tests",
 ]
 
@@ -22,9 +24,8 @@ authors = ["Apoorv Sadana <@apoorvsadana>"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [workspace.dependencies]
-num = { version = "0.4.1" }
+alloy = { version = "0.2.1", features = ["full"] }
 async-trait = { version = "0.1.77" }
-alloy = { version = "0.1.2", features = ["full"] }
 axum = { version = "0.7.4" }
 axum-macros = "0.4.1"
 bincode = "1.3.3"
@@ -32,14 +33,19 @@ color-eyre = "0.6.2"
 c-kzg = "1.0.0"
 dotenvy = "0.15.7"
 futures = "0.3.30"
-mongodb = { version = "2.8.1" }
+log = "0.4.21"
+mongodb = { version = "2.8.2" }
+num = { version = "0.4.1" }
 omniqueue = { version = "0.2.0" }
-reqwest = { version = "0.11.24" }
-rstest = "0.18.2"
+once_cell = "1.19.0"
+reqwest = { version = "0.12.5" }
+rstest = "0.22.0"
 serde = { version = "1.0.197" }
 serde_json = "1.0.114"
-starknet = "0.9.0"
+starknet = "0.11.0"
+starknet-core = "0.11.1"
 tempfile = "3.8.1"
+test-log = "0.2.16"
 thiserror = "1.0.57"
 tokio = { version = "1.37.0" }
 tokio-stream = "0.1.15"
@@ -57,10 +63,10 @@ stark_evm_adapter = "0.1.1"
 hex = "0.4"
 itertools = "0.13.0"
 mockall = "0.12.1"
-testcontainers = "0.18.0"
+testcontainers = "0.21.1"
 
 # Cairo VM
-cairo-vm = { git = "https://github.com/lambdaclass/cairo-vm", features = [
+cairo-vm = { version = "=1.0.0-rc5", features = [
   "extensive_hints",
   "cairo-1-hints",
 ] }
@@ -69,22 +75,33 @@ cairo-vm = { git = "https://github.com/lambdaclass/cairo-vm", features = [
 # can deserialize our snos input json into a StarknetOsInput struct.
 # TODO: update back to the main repo once it's merged
 # Sharp (Starkware)
-snos = { git = "https://github.com/keep-starknet-strange/snos" }
+snos = { git = "https://github.com/keep-starknet-strange/snos", rev = "4b4b3cdb614f9a6b736ff1b21a5ea75c87b7d83c" }
 
 # Madara prover API
-madara-prover-common = { git = "https://github.com/Moonsong-Labs/madara-prover-api", branch = "od/use-latest-cairo-vm" }
-madara-prover-rpc-client = { git = "https://github.com/Moonsong-Labs/madara-prover-api", branch = "od/use-latest-cairo-vm" }
+madara-prover-common = { git = "https://github.com/Moonsong-Labs/madara-prover-api", branch = "main" }
+madara-prover-rpc-client = { git = "https://github.com/Moonsong-Labs/madara-prover-api", branch = "main" }
 
 # Project
 da-client-interface = { path = "crates/da-clients/da-client-interface" }
 ethereum-da-client = { path = "crates/da-clients/ethereum" }
+aptos-da-client = { path = "crates/da-clients/aptos" }
 
 settlement-client-interface = { path = "crates/settlement-clients/settlement-client-interface" }
 ethereum-settlement-client = { path = "crates/settlement-clients/ethereum" }
 starknet-settlement-client = { path = "crates/settlement-clients/starknet" }
+aptos-settlement-client = { path = "crates/settlement-clients/aptos" }
 
 utils = { path = "crates/utils" }
 prover-client-interface = { path = "crates/prover-services/prover-client-interface" }
 gps-fact-checker = { path = "crates/prover-services/gps-fact-checker" }
 sharp-service = { path = "crates/prover-services/sharp-service" }
 orchestrator = { path = "crates/orchestrator" }
+
+aptos-sdk = { git = "https://github.com/aptos-labs/aptos-core" }
+aptos-testcontainer = { git = "https://github.com/sota-zk-labs/aptos-testcontainer", branch = "master", features = [
+  "testing",
+] }
+
+[patch.crates-io]
+merlin = { git = "https://github.com/aptos-labs/merlin" }
+x25519-dalek = { git = "https://github.com/Tranduy1dol/x25519-dalek", branch = "zeroize_v1.7" }

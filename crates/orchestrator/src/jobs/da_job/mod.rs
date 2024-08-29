@@ -7,7 +7,7 @@ use color_eyre::eyre::WrapErr;
 use lazy_static::lazy_static;
 use num_bigint::{BigUint, ToBigUint};
 use num_traits::{Num, Zero};
-use starknet::core::types::{BlockId, FieldElement, MaybePendingStateUpdate, StateUpdate, StorageEntry};
+use starknet::core::types::{BlockId, Felt, MaybePendingStateUpdate, StateUpdate, StorageEntry};
 use starknet::providers::Provider;
 use thiserror::Error;
 use tracing::log;
@@ -179,13 +179,13 @@ pub fn fft_transformation(elements: Vec<BigUint>) -> Vec<BigUint> {
     transform
 }
 
-pub fn convert_to_biguint(elements: Vec<FieldElement>) -> Vec<BigUint> {
+pub fn convert_to_biguint(elements: Vec<Felt>) -> Vec<BigUint> {
     // Initialize the vector with 4096 BigUint zeros
     let mut biguint_vec = vec![BigUint::zero(); 4096];
 
     // Iterate over the elements and replace the zeros in the biguint_vec
     for (i, element) in elements.iter().take(4096).enumerate() {
-        // Convert FieldElement to [u8; 32]
+        // Convert Felt to [u8; 32]
         let bytes: [u8; 32] = element.to_bytes_be();
 
         // Convert [u8; 32] to BigUint
@@ -206,7 +206,7 @@ fn data_to_blobs(blob_size: u64, block_data: Vec<BigUint>) -> Result<Vec<Vec<u8>
 
     let mut blobs: Vec<Vec<u8>> = Vec::new();
 
-    // Convert all FieldElements to bytes first
+    // Convert all Felts to bytes first
     let mut bytes: Vec<u8> = block_data.iter().flat_map(|element| element.to_bytes_be().to_vec()).collect();
 
     // Process bytes in chunks of blob_size
@@ -231,27 +231,27 @@ pub async fn state_update_to_blob_data(
     block_no: u64,
     state_update: StateUpdate,
     config: &Config,
-) -> color_eyre::Result<Vec<FieldElement>> {
+) -> color_eyre::Result<Vec<Felt>> {
     let state_diff = state_update.state_diff;
-    let mut blob_data: Vec<FieldElement> = vec![
-        FieldElement::from(state_diff.storage_diffs.len()),
+    let mut blob_data: Vec<Felt> = vec![
+        Felt::from(state_diff.storage_diffs.len()),
         // @note: won't need this if while producing the block we are attaching the block number
         // and the block hash
-        FieldElement::ONE,
-        FieldElement::ONE,
-        FieldElement::from(block_no),
+        Felt::ONE,
+        Felt::ONE,
+        Felt::from(block_no),
         state_update.block_hash,
     ];
 
-    let storage_diffs: HashMap<FieldElement, &Vec<StorageEntry>> =
+    let storage_diffs: HashMap<Felt, &Vec<StorageEntry>> =
         state_diff.storage_diffs.iter().map(|item| (item.address, &item.storage_entries)).collect();
-    let declared_classes: HashMap<FieldElement, FieldElement> =
+    let declared_classes: HashMap<Felt, Felt> =
         state_diff.declared_classes.iter().map(|item| (item.class_hash, item.compiled_class_hash)).collect();
-    let deployed_contracts: HashMap<FieldElement, FieldElement> =
+    let deployed_contracts: HashMap<Felt, Felt> =
         state_diff.deployed_contracts.iter().map(|item| (item.address, item.class_hash)).collect();
-    let replaced_classes: HashMap<FieldElement, FieldElement> =
+    let replaced_classes: HashMap<Felt, Felt> =
         state_diff.replaced_classes.iter().map(|item| (item.contract_address, item.class_hash)).collect();
-    let mut nonces: HashMap<FieldElement, FieldElement> =
+    let mut nonces: HashMap<Felt, Felt> =
         state_diff.nonces.iter().map(|item| (item.contract_address, item.nonce)).collect();
 
     // Loop over storage diffs
@@ -263,7 +263,7 @@ pub async fn state_update_to_blob_data(
         // @note: if nonce is null and there is some len of writes, make an api call to get the contract
         // nonce for the block
 
-        if nonce.is_none() && !writes.is_empty() && addr != FieldElement::ONE {
+        if nonce.is_none() && !writes.is_empty() && addr != Felt::ONE {
             let get_current_nonce_result = config
                 .starknet_client()
                 .get_nonce(BlockId::Number(block_no), addr)
@@ -278,7 +278,7 @@ pub async fn state_update_to_blob_data(
         //        block number and hash
         // @note: ONE special address can be used to mark the range of block, if in future
         //        the team wants to submit multiple blocks in a single blob etc.
-        if addr == FieldElement::ONE && da_word == FieldElement::ONE {
+        if addr == Felt::ONE && da_word == Felt::ONE {
             continue;
         }
         blob_data.push(addr);
@@ -294,7 +294,7 @@ pub async fn state_update_to_blob_data(
         }
     }
     // Handle declared classes
-    blob_data.push(FieldElement::from(declared_classes.len()));
+    blob_data.push(Felt::from(declared_classes.len()));
 
     for (class_hash, compiled_class_hash) in &declared_classes {
         blob_data.push(*class_hash);
@@ -308,7 +308,7 @@ pub async fn state_update_to_blob_data(
 }
 
 /// To store the blob data using the storage client with path <block_number>/blob_data.txt
-async fn store_blob_data(blob_data: Vec<FieldElement>, block_number: u64, config: &Config) -> Result<(), JobError> {
+async fn store_blob_data(blob_data: Vec<Felt>, block_number: u64, config: &Config) -> Result<(), JobError> {
     let storage_client = config.storage();
     let key = block_number.to_string() + "/" + BLOB_DATA_FILE_NAME;
     let data_blob_big_uint = convert_to_biguint(blob_data.clone());
@@ -332,7 +332,7 @@ async fn store_blob_data(blob_data: Vec<FieldElement>, block_number: u64, config
 /// DA word encoding:
 /// |---padding---|---class flag---|---new nonce---|---num changes---|
 ///     127 bits        1 bit           64 bits          64 bits
-fn da_word(class_flag: bool, nonce_change: Option<FieldElement>, num_changes: u64) -> FieldElement {
+fn da_word(class_flag: bool, nonce_change: Option<Felt>, num_changes: u64) -> Felt {
     // padding of 127 bits
     let mut binary_string = "0".repeat(127);
 
@@ -364,7 +364,7 @@ fn da_word(class_flag: bool, nonce_change: Option<FieldElement>, num_changes: u6
     // Now convert the BigUint to a decimal string
     let decimal_string = biguint.to_str_radix(10);
 
-    FieldElement::from_dec_str(&decimal_string).expect("issue while converting to fieldElement")
+    Felt::from_dec_str(&decimal_string).expect("issue while converting to Felt")
 }
 
 #[cfg(test)]
@@ -385,7 +385,7 @@ pub mod test {
     use majin_blob_types::state_diffs::UnorderedEq;
     use rstest::rstest;
     use serde_json::json;
-    use starknet_core::types::{FieldElement, StateUpdate};
+    use starknet::core::types::{Felt, StateUpdate};
 
     use crate::tests::common::init_config;
 
@@ -404,9 +404,9 @@ pub mod test {
         #[case] num_changes: u64,
         #[case] expected: String,
     ) {
-        let new_nonce = if new_nonce > 0 { Some(FieldElement::from(new_nonce)) } else { None };
+        let new_nonce = if new_nonce > 0 { Some(Felt::from(new_nonce)) } else { None };
         let da_word = da_word(class_flag, new_nonce, num_changes);
-        let expected = FieldElement::from_dec_str(expected.as_str()).unwrap();
+        let expected = Felt::from_dec_str(expected.as_str()).unwrap();
         assert_eq!(da_word, expected);
     }
 
@@ -552,7 +552,7 @@ pub mod test {
             let nonce = entry.nonce.clone();
             let response = json!({ "id": 1,"jsonrpc":"2.0","result": nonce });
             let field_element =
-                FieldElement::from_dec_str(&address).expect("issue while converting the hex to field").to_bytes_be();
+                Felt::from_dec_str(&address).expect("issue while converting the hex to field").to_bytes_be();
             let hex_field_element = vec_u8_to_hex_string(&field_element);
 
             server.mock(|when, then| {

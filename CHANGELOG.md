@@ -22,6 +22,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Tests for DA job.
 - Added generalized errors for Jobs : JobError.
 - Database tests
+- Aptos DA client, Aptos-compatible workflow.
 
 ## Changed
 
@@ -29,11 +30,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Orchestrator :Moved TestConfigBuilder to `config.rs` in tests folder.
 - `.env` file requires two more variables which are queue urls for processing
   and verification.
+- Shifted Unit tests to test folder for DA job.
 
 ## Removed
 
 - `fetch_from_test` argument
 
 ## Fixed
-
+- 
 - Fixed state update worker logic as per the new implementation.

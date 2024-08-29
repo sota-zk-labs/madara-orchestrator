@@ -4,9 +4,9 @@ name: Workflow - Pull Request
 on:
   workflow_dispatch:
   pull_request:
-    branches: [main]
+    branches: [aptos]
   push:
-    branches: [main]
+    branches: [aptos]
 
 jobs:
   linters:
