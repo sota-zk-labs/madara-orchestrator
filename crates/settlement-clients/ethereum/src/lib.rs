@@ -30,6 +30,7 @@ use crate::clients::interfaces::validity_interface::StarknetValidityContractTrai
 use crate::clients::StarknetValidityContractClient;
 use crate::config::EthereumSettlementConfig;
 use crate::conversion::{slice_u8_to_u256, vec_u8_32_to_vec_u256};
+
 pub mod clients;
 pub mod config;
 pub mod conversion;

@@ -355,8 +355,7 @@ async fn get_delivery_from_queue(queue: &str, config: Arc<Config>) -> Result<Del
 }
 
 macro_rules! spawn_consumer {
-    ($queue_type:expr, $handler:expr, $consume_function:expr, $config:expr) => {
-        let config_clone = $config.clone();
+    ($queue_type :expr, $handler : expr, $consume_function: expr) => {
         tokio::spawn(async move {
             loop {
                 match $consume_function($queue_type, $handler, config_clone.clone()).await {
