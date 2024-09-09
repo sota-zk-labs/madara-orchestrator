@@ -8,7 +8,7 @@ use cairo_vm::types::builtin_name::BuiltinName;
 use cairo_vm::types::relocatable::MaybeRelocatable;
 use cairo_vm::vm::runners::cairo_pie::CairoPie;
 use cairo_vm::Felt252;
-use starknet::core::types::FieldElement;
+use starknet::core::types::Felt;
 
 use super::error::FactCheckerError;
 use super::fact_node::generate_merkle_root;
@@ -25,15 +25,15 @@ pub struct FactInfo {
     pub fact: B256,
 }
 
-pub fn get_fact_info(cairo_pie: &CairoPie, program_hash: Option<FieldElement>) -> Result<FactInfo, FactCheckerError> {
+pub fn get_fact_info(cairo_pie: &CairoPie, program_hash: Option<Felt>) -> Result<FactInfo, FactCheckerError> {
     let program_output = get_program_output(cairo_pie)?;
     let fact_topology = get_fact_topology(cairo_pie, program_output.len())?;
     let program_hash = match program_hash {
-        Some(hash) => hash,
-        None => compute_program_hash_chain(&cairo_pie.metadata.program, BOOTLOADER_VERSION)?,
+        Some(hash) => hash.to_bytes_be(),
+        None => compute_program_hash_chain(&cairo_pie.metadata.program, BOOTLOADER_VERSION)?.to_bytes_be(),
     };
     let output_root = generate_merkle_root(&program_output, &fact_topology)?;
-    let fact = keccak256([program_hash.to_bytes_be(), *output_root.node_hash].concat());
+    let fact = keccak256([program_hash, *output_root.node_hash].concat());
     Ok(FactInfo { program_output, fact_topology, fact })
 }
 

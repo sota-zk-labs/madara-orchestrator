@@ -1,8 +1,8 @@
 use std::collections::HashMap;
 
+use chrono::{SubsecRound, Utc};
 use mockall::predicate::eq;
 use uuid::Uuid;
-use chrono::{SubsecRound, Utc};
 
 use crate::database::MockDatabase;
 use crate::jobs::constants::JOB_METADATA_CAIRO_PIE_PATH_KEY;

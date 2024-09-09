@@ -11,6 +11,7 @@ aptos-sdk = { workspace = true }
 aptos-testcontainer = { workspace = true }
 async-trait = { workspace = true }
 color-eyre = { workspace = true }
+c-kzg = { workspace = true }
 dotenvy = { workspace = true }
 hex = { workspace = true }
 log = { workspace = true }
@@ -19,6 +20,7 @@ once_cell = { workspace = true }
 settlement-client-interface = { workspace = true }
 tokio = { workspace = true }
 utils = { workspace = true }
+lazy_static = { workspace = true }
 
 [dev-dependencies]
 test-log = { workspace = true }

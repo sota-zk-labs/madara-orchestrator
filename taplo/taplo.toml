@@ -1,11 +1,10 @@
 include = ["**/*.toml"]
-exclude = ["**/bad.toml"]
 
 [formatting]
 align_entries = false
 
 [[rule]]
-keys = ["dependencies"]
+keys = ["dependencies", "dev-dependencies", "patch.crates-io"]
 
 [rule.formatting]
 reorder_keys = true
