@@ -1,7 +1,9 @@
 #![allow(missing_docs)]
 #![allow(clippy::missing_docs_in_private_items)]
-use std::str::FromStr;
 
+use std::path::{PathBuf};
+use std::str::FromStr;
+use alloy::eips::eip4844::BYTES_PER_BLOB;
 use aptos_sdk::crypto::HashValue;
 use aptos_sdk::move_types::account_address::AccountAddress;
 use aptos_sdk::move_types::identifier::Identifier;
@@ -14,12 +16,15 @@ use aptos_sdk::types::chain_id::ChainId;
 use aptos_sdk::types::transaction::{EntryFunction, TransactionPayload};
 use aptos_sdk::types::LocalAccount;
 use async_trait::async_trait;
+use c_kzg::{Blob, Bytes32, KzgCommitment, KzgProof, KzgSettings};
 use color_eyre::eyre;
+use color_eyre::eyre::eyre;
+use lazy_static::lazy_static;
 use mockall::automock;
 use settlement_client_interface::{SettlementClient, SettlementVerificationStatus};
 
 use crate::config::AptosSettlementConfig;
-use crate::helper::build_transaction;
+use crate::helper::{build_transaction, build_transaction_with_nonce};
 
 pub mod config;
 pub mod helper;
@@ -35,6 +40,41 @@ const STARKNET_VALIDITY: &str = "starknet_validity";
 const UPDATE_STATE: &str = "update_state";
 const UPDATE_STATE_KZG_DA: &str = "update_state_kzg_da";
 const STATE_BLOCK_NUMBER: &str = "state_block_number";
+
+lazy_static! {
+    pub static ref CURRENT_PATH: PathBuf = std::env::current_dir().unwrap();
+    pub static ref KZG_SETTINGS: KzgSettings =
+        // TODO: set more generalized path
+        KzgSettings::load_trusted_setup_file(CURRENT_PATH.join("src/trusted_setup.txt").as_path())
+            .expect("Error loading trusted setup file");
+}
+
+impl AptosSettlementClient {
+    /// Build kzg proof for the x_0 point evaluation
+    pub fn build_proof(blob_data: Vec<Vec<u8>>, x_0_value: Bytes32) -> color_eyre::Result<KzgProof> {
+        // Assuming that there is only one blob in the whole Vec<Vec<u8>> array for now.
+        // Later we will add the support for multiple blob in single blob_data vec.
+        assert_eq!(blob_data.len(), 1);
+
+        let fixed_size_blob: [u8; BYTES_PER_BLOB] = blob_data[0].as_slice().try_into()?;
+
+        let blob = Blob::new(fixed_size_blob);
+        let commitment = KzgCommitment::blob_to_kzg_commitment(&blob, &KZG_SETTINGS)?;
+        let (kzg_proof, y_0_value) = KzgProof::compute_kzg_proof(&blob, &x_0_value, &KZG_SETTINGS)?;
+
+        // Verifying the proof for double check
+        let eval = KzgProof::verify_kzg_proof(
+            &commitment.to_bytes(),
+            &x_0_value,
+            &y_0_value,
+            &kzg_proof.to_bytes(),
+            &KZG_SETTINGS,
+        )?;
+
+        if !eval { Err(eyre!("ERROR : Assertion failed, not able to verify the proof.")) } else { color_eyre::eyre::Ok(kzg_proof) }
+    }
+}
+
 
 impl From<AptosSettlementConfig> for AptosSettlementClient {
     fn from(config: AptosSettlementConfig) -> Self {
@@ -60,7 +100,7 @@ impl SettlementClient for AptosSettlementClient {
         program_output: Vec<[u8; 32]>,
         onchain_data_hash: [u8; 32],
         onchain_data_size: usize,
-    ) -> eyre::Result<String> {
+    ) -> color_eyre::Result<String> {
         let sequencer_number = self.client.get_account(self.account.address()).await?.into_inner().sequence_number;
         self.account.set_sequence_number(sequencer_number);
 
@@ -76,7 +116,7 @@ impl SettlementClient for AptosSettlementClient {
                     &MoveValue::U256(U256::from_le_bytes(&onchain_data_hash)),
                     &MoveValue::U256(U256::from(onchain_data_size as u128)),
                 ]
-                .into_iter(),
+                    .into_iter(),
             ),
         ));
 
@@ -98,20 +138,18 @@ impl SettlementClient for AptosSettlementClient {
         Ok(transaction_info.hash.to_string())
     }
 
-    #[allow(unused)]
     async fn update_state_with_blobs(
         &self,
         program_output: Vec<[u8; 32]>,
         state_diff: Vec<Vec<u8>>,
+        nonce: u64,
     ) -> color_eyre::Result<String> {
-        unimplemented!("hee-hee")
-    }
+        // x_0_value : program_output[8]
+        let kzg_proof = Self::build_proof(
+            state_diff,
+            Bytes32::from_bytes(program_output[8].as_slice()).expect("Not able to get x_0 point params."),
+        )?;
 
-    async fn update_state_blobs(
-        &self,
-        program_output: Vec<[u8; 32]>,
-        kzg_proof: [u8; 48],
-    ) -> color_eyre::Result<String> {
         let payload = TransactionPayload::EntryFunction(EntryFunction::new(
             ModuleId::new(self.account.address(), Identifier::new(STARKNET_VALIDITY).unwrap()),
             Identifier::new(UPDATE_STATE_KZG_DA).unwrap(),
@@ -123,11 +161,11 @@ impl SettlementClient for AptosSettlementClient {
                     ),
                     &MoveValue::vector_u8(kzg_proof.to_vec()),
                 ]
-                .into_iter(),
+                    .into_iter(),
             ),
         ));
 
-        let signed_txn = build_transaction(payload, &self.account, self.chain_id);
+        let signed_txn = build_transaction_with_nonce(payload, &self.account, self.chain_id, nonce);
 
         let tx = self
             .client
@@ -176,14 +214,23 @@ impl SettlementClient for AptosSettlementClient {
                     STARKNET_VALIDITY,
                     STATE_BLOCK_NUMBER
                 )
-                .as_str(),
+                    .as_str(),
             )
-            .expect("Invalid function name"),
+                .expect("Invalid function name"),
         };
         let response = client.view(&request, None).await?.into_inner();
 
         let block_number = response.first().unwrap().as_str().unwrap();
         Ok(block_number.parse::<u64>()?)
+    }
+
+    async fn get_nonce(&self) -> color_eyre::Result<u64> {
+        Ok(self
+            .client
+            .get_account(self.account.address())
+            .await?
+            .into_inner()
+            .sequence_number)
     }
 }
 
@@ -192,17 +239,20 @@ mod test {
     use std::collections::HashMap;
 
     use aptos_sdk::crypto::ValidCryptoMaterialStringExt;
+    use aptos_sdk::move_types::identifier::Identifier;
+    use aptos_sdk::move_types::language_storage::ModuleId;
     use aptos_sdk::move_types::u256;
+    use aptos_sdk::move_types::value::{serialize_values, MoveValue};
     use aptos_sdk::types::chain_id::NamedChain::TESTING;
+    use aptos_sdk::types::transaction::{EntryFunction, TransactionPayload};
     use aptos_testcontainer::test_utils::aptos_container_test_utils::{lazy_aptos_container, run};
     use settlement_client_interface::{SettlementClient, SettlementVerificationStatus};
     use test_log::test;
 
+    use super::*;
     use crate::config::AptosSettlementConfig;
     use crate::helper::build_transaction;
     use crate::{AptosSettlementClient, STARKNET_VALIDITY};
-
-    use super::*;
 
     const REGISTER_FACT: &'static str = "register_fact";
     const FACT_REGISTRY: &'static str = "fact_registry";
@@ -222,7 +272,7 @@ mod test {
                     &MoveValue::U256(u256::U256::from(0u128)),
                     &MoveValue::U256(u256::U256::from(0u128)),
                 ]
-                .into_iter(),
+                    .into_iter(),
             ),
         ));
         let tx = build_transaction(payload, &settlement_client.account, settlement_client.chain_id);
@@ -296,7 +346,7 @@ mod test {
                     &settlement_client,
                     "38a811b0f756a978eda5dd75bdaecc4942f7eba409805c88edf1442dcaea2cdc",
                 )
-                .await;
+                    .await;
 
                 let program_output: Vec<[u8; 32]> = vec![
                     u256::U256::from(0u128).to_le_bytes(), // Global root
@@ -326,6 +376,6 @@ mod test {
                 Ok(())
             })
         })
-        .await
+            .await
     }
 }
