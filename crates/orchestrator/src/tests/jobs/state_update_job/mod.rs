@@ -5,21 +5,23 @@ use std::sync::Arc;
 
 use assert_matches::assert_matches;
 use bytes::Bytes;
+use color_eyre::eyre::eyre;
 use httpmock::prelude::*;
+use lazy_static::lazy_static;
 use mockall::predicate::{always, eq};
 use rstest::*;
 use settlement_client_interface::MockSettlementClient;
-
-use color_eyre::eyre::eyre;
+use starknet::providers::jsonrpc::HttpTransport;
+use starknet::providers::JsonRpcClient;
+use url::Url;
 use utils::env_utils::get_env_var_or_panic;
 
 use crate::config::config;
 use crate::constants::{BLOB_DATA_FILE_NAME, SNOS_OUTPUT_FILE_NAME};
 use crate::data_storage::MockDataStorage;
-use crate::jobs::constants::JOB_METADATA_STATE_UPDATE_LAST_FAILED_BLOCK_NO;
 use crate::jobs::constants::{
     JOB_METADATA_STATE_UPDATE_BLOCKS_TO_SETTLE_KEY, JOB_METADATA_STATE_UPDATE_FETCH_FROM_TESTS,
-    JOB_PROCESS_ATTEMPT_METADATA_KEY,
+    JOB_METADATA_STATE_UPDATE_LAST_FAILED_BLOCK_NO, JOB_PROCESS_ATTEMPT_METADATA_KEY,
 };
 use crate::jobs::state_update_job::utils::hex_string_to_u8_vec;
 use crate::jobs::state_update_job::{StateUpdateError, StateUpdateJob};
@@ -27,10 +29,6 @@ use crate::jobs::types::{JobStatus, JobType};
 use crate::jobs::{Job, JobError};
 use crate::tests::common::{default_job_item, get_storage_client};
 use crate::tests::config::TestConfigBuilder;
-use lazy_static::lazy_static;
-use starknet::providers::jsonrpc::HttpTransport;
-use starknet::providers::JsonRpcClient;
-use url::Url;
 
 lazy_static! {
     pub static ref CURRENT_PATH: PathBuf = std::env::current_dir().unwrap();
@@ -79,12 +77,13 @@ async fn test_process_job_works(
     // Storing `blob_data` and `snos_output` in storage client
     store_data_in_storage_client_for_s3(block_numbers.clone()).await;
 
-    // Building a temp config that will be used by `fetch_blob_data_for_block` and `fetch_snos_for_block`
-    // functions while fetching the blob data from storage client.
+    // Building a temp config that will be used by `fetch_blob_data_for_block` and
+    // `fetch_snos_for_block` functions while fetching the blob data from storage client.
     TestConfigBuilder::new().build().await;
 
-    // test_process_job_works uses nonce just to write expect_update_state_with_blobs for a mocked settlement client,
-    // which means that nonce ideally is never checked against, hence supplying any `u64` `nonce` works.
+    // test_process_job_works uses nonce just to write expect_update_state_with_blobs for a mocked
+    // settlement client, which means that nonce ideally is never checked against, hence supplying
+    // any `u64` `nonce` works.
     let nonce: u64 = 3;
     settlement_client.expect_get_nonce().with().returning(move || Ok(nonce));
 
@@ -191,7 +190,8 @@ async fn process_job_works() {
         .expect("Failed to read the blob data txt file");
         storage_client.expect_get_data().with(eq(x_0_key)).returning(move |_| Ok(Bytes::from(x_0.clone())));
 
-        // let nonce = settlement_client.get_nonce().await.expect("Unable to fetch nonce for settlement client.");
+        // let nonce = settlement_client.get_nonce().await.expect("Unable to fetch nonce for settlement
+        // client.");
         settlement_client.expect_get_nonce().returning(|| Ok(1));
 
         settlement_client

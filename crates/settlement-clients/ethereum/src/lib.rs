@@ -5,37 +5,34 @@ use std::sync::Arc;
 use alloy::consensus::{
     BlobTransactionSidecar, SignableTransaction, TxEip4844, TxEip4844Variant, TxEip4844WithSidecar, TxEnvelope,
 };
-use alloy::{
-    network::EthereumWallet,
-    primitives::{Address, B256, U256},
-    providers::{PendingTransactionConfig, Provider},
-    rpc::types::TransactionReceipt,
-    signers::local::PrivateKeySigner,
-};
-
 use alloy::eips::eip2930::AccessList;
 use alloy::eips::eip4844::BYTES_PER_BLOB;
 use alloy::hex;
-use alloy::rpc::types::TransactionRequest;
+use alloy::network::EthereumWallet;
+use alloy::primitives::{Address, B256, U256};
+use alloy::providers::{PendingTransactionConfig, Provider, ProviderBuilder};
+use alloy::rpc::types::{TransactionReceipt, TransactionRequest};
+use alloy::signers::local::PrivateKeySigner;
 use alloy_primitives::Bytes;
 use async_trait::async_trait;
 use c_kzg::{Blob, Bytes32, KzgCommitment, KzgProof, KzgSettings};
 use color_eyre::eyre::{eyre, Ok};
 use color_eyre::Result;
-use lazy_static::lazy_static;
-use mockall::{automock, predicate::*};
-
-use alloy::providers::ProviderBuilder;
 use conversion::{get_input_data_for_eip_4844, prepare_sidecar};
+use lazy_static::lazy_static;
+use mockall::automock;
+use mockall::predicate::*;
 use settlement_client_interface::{SettlementClient, SettlementVerificationStatus, SETTLEMENT_SETTINGS_NAME};
 #[cfg(test)]
 use url::Url;
-use utils::{env_utils::get_env_var_or_panic, settings::SettingsProvider};
+use utils::env_utils::get_env_var_or_panic;
+use utils::settings::SettingsProvider;
 
 use crate::clients::interfaces::validity_interface::StarknetValidityContractTrait;
 use crate::clients::StarknetValidityContractClient;
 use crate::config::EthereumSettlementConfig;
 use crate::conversion::{slice_u8_to_u256, vec_u8_32_to_vec_u256};
+
 pub mod clients;
 pub mod config;
 pub mod conversion;
@@ -44,7 +41,9 @@ pub mod conversion;
 mod tests;
 pub mod types;
 
-use {alloy::providers::RootProvider, alloy::transports::http::Http, reqwest::Client};
+use alloy::providers::RootProvider;
+use alloy::transports::http::Http;
+use reqwest::Client;
 
 pub const ENV_PRIVATE_KEY: &str = "ETHEREUM_PRIVATE_KEY";
 
@@ -147,11 +146,7 @@ impl EthereumSettlementClient {
             &KZG_SETTINGS,
         )?;
 
-        if !eval {
-            Err(eyre!("ERROR : Assertion failed, not able to verify the proof."))
-        } else {
-            Ok(kzg_proof)
-        }
+        if !eval { Err(eyre!("ERROR : Assertion failed, not able to verify the proof.")) } else { Ok(kzg_proof) }
     }
 }
 
@@ -187,7 +182,7 @@ impl SettlementClient for EthereumSettlementClient {
         state_diff: Vec<Vec<u8>>,
         nonce: u64,
     ) -> Result<String> {
-        //TODO: better file management
+        // TODO: better file management
 
         let trusted_setup_path: String = CURRENT_PATH
             .join("src")
@@ -292,8 +287,9 @@ impl SettlementClient for EthereumSettlementClient {
 
 #[cfg(test)]
 mod test_config {
-    use super::*;
     use alloy::network::TransactionBuilder;
+
+    use super::*;
 
     pub async fn configure_transaction(
         // provider: Arc<RootProvider<Http<Client>>>,
@@ -304,14 +300,18 @@ mod test_config {
         let mut txn_request: TransactionRequest = tx_envelope.into();
 
         // IMPORTANT to understand #[cfg(test)], #[cfg(not(test))] and SHOULD_IMPERSONATE_ACCOUNT
-        // Two tests :  `update_state_blob_with_dummy_contract_works` & `update_state_blob_with_impersonation_works` use a env var `SHOULD_IMPERSONATE_ACCOUNT` to inform the function `update_state_with_blobs` about the kind of testing,
+        // Two tests :  `update_state_blob_with_dummy_contract_works` &
+        // `update_state_blob_with_impersonation_works` use a env var `SHOULD_IMPERSONATE_ACCOUNT` to inform
+        // the function `update_state_with_blobs` about the kind of testing,
         // `SHOULD_IMPERSONATE_ACCOUNT` can have any of "0" or "1" value :
         //      - if "0" then : Testing via default Anvil address.
         //      - if "1" then : Testing via impersonating `Starknet Operator Address`.
-        // Note : changing between "0" and "1" is handled automatically by each test function, `no` manual change in `env.test` is needed.
+        // Note : changing between "0" and "1" is handled automatically by each test function, `no` manual
+        // change in `env.test` is needed.
         if let Some(impersonate_account) = impersonate_account {
             // let nonce =
-            // provider.get_transaction_count(impersonate_account).await.unwrap().to_string().parse::<u64>().unwrap();
+            // provider.get_transaction_count(impersonate_account).await.unwrap().to_string().parse::<u64>().
+            // unwrap();
             txn_request.set_nonce(nonce);
             txn_request = txn_request.with_from(impersonate_account);
         }

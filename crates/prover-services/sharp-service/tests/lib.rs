@@ -1,4 +1,5 @@
-use crate::constants::{CAIRO_PIE_PATH, TEST_FACT};
+use std::str::FromStr;
+
 use alloy::primitives::B256;
 use cairo_vm::vm::runners::cairo_pie::CairoPie;
 use httpmock::MockServer;
@@ -7,9 +8,10 @@ use rstest::rstest;
 use serde_json::json;
 use sharp_service::{split_task_id, SharpProverService};
 use snos::sharp::CairoJobStatus;
-use std::str::FromStr;
 use utils::env_utils::get_env_var_or_panic;
 use utils::settings::default::DefaultSettingsProvider;
+
+use crate::constants::{CAIRO_PIE_PATH, TEST_FACT};
 
 mod constants;
 

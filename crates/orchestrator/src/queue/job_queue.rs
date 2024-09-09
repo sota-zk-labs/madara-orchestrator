@@ -5,12 +5,19 @@ use color_eyre::eyre::Context;
 use color_eyre::Result as EyreResult;
 use omniqueue::{Delivery, QueueError};
 use serde::{Deserialize, Serialize};
+use thiserror::Error;
 use tokio::time::sleep;
 use tracing::log;
 use uuid::Uuid;
 
 use crate::config::config;
 use crate::jobs::{handle_job_failure, process_job, verify_job, JobError, OtherError};
+use crate::workers::data_submission_worker::DataSubmissionWorker;
+use crate::workers::proof_registration::ProofRegistrationWorker;
+use crate::workers::proving::ProvingWorker;
+use crate::workers::snos::SnosWorker;
+use crate::workers::update_state::UpdateStateWorker;
+use crate::workers::Worker;
 
 pub const JOB_PROCESSING_QUEUE: &str = "madara_orchestrator_job_processing_queue";
 pub const JOB_VERIFICATION_QUEUE: &str = "madara_orchestrator_job_verification_queue";
@@ -19,14 +26,6 @@ pub const JOB_HANDLE_FAILURE_QUEUE: &str = "madara_orchestrator_job_handle_failu
 
 // Queues for SNOS worker trigger listening
 pub const WORKER_TRIGGER_QUEUE: &str = "madara_orchestrator_worker_trigger_queue";
-
-use crate::workers::data_submission_worker::DataSubmissionWorker;
-use crate::workers::proof_registration::ProofRegistrationWorker;
-use crate::workers::proving::ProvingWorker;
-use crate::workers::snos::SnosWorker;
-use crate::workers::update_state::UpdateStateWorker;
-use crate::workers::Worker;
-use thiserror::Error;
 
 #[derive(Error, Debug, PartialEq)]
 pub enum ConsumptionError {
@@ -245,7 +244,7 @@ async fn get_delivery_from_queue(queue: &str) -> Result<DeliveryReturnType, Cons
 }
 
 macro_rules! spawn_consumer {
-    ($queue_type :expr, $handler : expr, $consume_function: expr) => {
+    ($queue_type:expr, $handler:expr, $consume_function:expr) => {
         tokio::spawn(async move {
             loop {
                 match $consume_function($queue_type, $handler).await {

@@ -44,8 +44,8 @@ impl ProverClient for SharpProverService {
         let (job_key, fact) = split_task_id(task_id)?;
         let res = self.sharp_client.get_job_status(&job_key).await?;
         match res.status {
-            // TODO : We would need to remove the FAILED, UNKNOWN, NOT_CREATED status as it is not in the sharp client response specs :
-            // https://docs.google.com/document/d/1-9ggQoYmjqAtLBGNNR2Z5eLreBmlckGYjbVl0khtpU0
+            // TODO : We would need to remove the FAILED, UNKNOWN, NOT_CREATED status as it is not in the sharp client
+            // response specs : https://docs.google.com/document/d/1-9ggQoYmjqAtLBGNNR2Z5eLreBmlckGYjbVl0khtpU0
             // We are waiting for the official public API spec before making changes
             CairoJobStatus::FAILED => Ok(TaskStatus::Failed(res.error_log.unwrap_or_default())),
             CairoJobStatus::INVALID => {

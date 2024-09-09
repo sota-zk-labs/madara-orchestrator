@@ -1,9 +1,6 @@
-use std::sync::Arc;
-
 use arc_swap::Guard;
 use chrono::{SubsecRound, Utc};
 use rstest::*;
-use std::sync::Arc;
 use uuid::Uuid;
 
 use crate::config::{config, Config};

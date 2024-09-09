@@ -1,13 +1,7 @@
 use std::sync::Arc;
 
-use crate::config::{
-    build_alert_client, build_da_client, build_prover_service, build_settlement_client, config_force_init, Config,
-};
-use crate::data_storage::DataStorage;
 use da_client_interface::DaClient;
 use httpmock::MockServer;
-
-use crate::alerts::Alerts;
 use prover_client_interface::ProverClient;
 use settlement_client_interface::SettlementClient;
 use starknet::providers::jsonrpc::HttpTransport;
@@ -15,6 +9,11 @@ use starknet::providers::{JsonRpcClient, Url};
 use utils::env_utils::get_env_var_or_panic;
 use utils::settings::default::DefaultSettingsProvider;
 
+use crate::alerts::Alerts;
+use crate::config::{
+    build_alert_client, build_da_client, build_prover_service, build_settlement_client, config_force_init, Config,
+};
+use crate::data_storage::DataStorage;
 use crate::database::mongodb::config::MongoDbConfig;
 use crate::database::mongodb::MongoDb;
 use crate::database::{Database, DatabaseConfig};

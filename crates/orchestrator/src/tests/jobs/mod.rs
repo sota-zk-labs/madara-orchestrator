@@ -1,11 +1,10 @@
 use rstest::rstest;
 
+use super::database::build_job_item;
 use crate::config::config;
 use crate::jobs::handle_job_failure;
-use crate::jobs::types::JobType;
-use crate::{jobs::types::JobStatus, tests::config::TestConfigBuilder};
-
-use super::database::build_job_item;
+use crate::jobs::types::{JobStatus, JobType};
+use crate::tests::config::TestConfigBuilder;
 
 #[cfg(test)]
 pub mod da_job;
@@ -16,13 +15,12 @@ pub mod proving_job;
 #[cfg(test)]
 pub mod state_update_job;
 
-use assert_matches::assert_matches;
-use chrono::{SubsecRound, Utc};
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::Duration;
 
 use assert_matches::assert_matches;
+use chrono::{SubsecRound, Utc};
 use mockall::predicate::eq;
 use mongodb::bson::doc;
 use omniqueue::QueueError;
