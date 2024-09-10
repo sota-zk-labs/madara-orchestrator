@@ -27,5 +27,5 @@ utils.workspace = true
 uuid.workspace = true
 
 [dev-dependencies]
-tokio.workspace = true
 httpmock.workspace = true
+tokio.workspace = true

@@ -4,6 +4,7 @@ members = [
   "crates/orchestrator",
   "crates/da-clients/da-client-interface",
   "crates/da-clients/ethereum",
+  "crates/da-clients/aptos",
   "crates/prover-services/prover-client-interface",
   "crates/prover-services/gps-fact-checker",
   "crates/prover-services/sharp-service",
@@ -47,9 +48,9 @@ num-traits = "0.2"
 omniqueue = { version = "0.2.0" }
 once_cell = "1.19.0"
 reqwest = { version = "0.12.7", features = [
-    "rustls-tls",
-    "native-tls",
-    "json",
+  "rustls-tls",
+  "native-tls",
+  "json",
 ] }
 rstest = "0.22.0"
 serde = { version = "1.0.197" }
@@ -87,10 +88,12 @@ madara-prover-rpc-client = { git = "https://github.com/Moonsong-Labs/madara-prov
 # Project
 da-client-interface = { path = "crates/da-clients/da-client-interface" }
 ethereum-da-client = { path = "crates/da-clients/ethereum" }
+aptos-da-client = { path = "crates/da-clients/aptos" }
 
 ethereum-settlement-client = { path = "crates/settlement-clients/ethereum" }
 settlement-client-interface = { path = "crates/settlement-clients/settlement-client-interface" }
 starknet-settlement-client = { path = "crates/settlement-clients/starknet" }
+aptos-settlement-client = { path = "crates/settlement-clients/aptos" }
 
 gps-fact-checker = { path = "crates/prover-services/gps-fact-checker" }
 orchestrator = { path = "crates/orchestrator" }

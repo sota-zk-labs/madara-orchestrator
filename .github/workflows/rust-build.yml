@@ -19,4 +19,5 @@ jobs:
 
       - name: Build the project
         run: |
+          sudo apt install build-essential cmake pkg-config libudev-dev
           cargo build --release --workspace

@@ -1354,6 +1354,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "aptos-da-client"
+version = "0.1.0"
+dependencies = [
+ "alloy 0.2.1",
+ "anyhow",
+ "aptos-sdk",
+ "aptos-testcontainer",
+ "async-trait",
+ "c-kzg",
+ "color-eyre",
+ "da-client-interface",
+ "dotenvy",
+ "lazy_static",
+ "tokio",
+ "utils",
+]
+
+[[package]]
 name = "aptos-dkg"
 version = "0.1.0"
 source = "git+https://github.com/aptos-labs/aptos-core#06900559ea5f03b380b1637b861cdab34501ed2d"
@@ -9524,6 +9542,7 @@ name = "orchestrator"
 version = "0.1.0"
 dependencies = [
  "alloy 0.2.1",
+ "aptos-da-client",
  "arc-swap",
  "assert_matches",
  "async-std",

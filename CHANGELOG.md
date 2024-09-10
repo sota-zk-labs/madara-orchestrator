@@ -29,6 +29,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Tests for DA job.
 - Added generalized errors for Jobs : JobError.
 - Database tests
+- Aptos DA client, Aptos-compatible workflow.
 
 ## Changed
 
