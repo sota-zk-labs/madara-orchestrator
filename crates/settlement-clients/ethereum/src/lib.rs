@@ -136,7 +136,11 @@ impl EthereumSettlementClient {
             &KZG_SETTINGS,
         )?;
 
-        if !eval { Err(eyre!("ERROR : Assertion failed, not able to verify the proof.")) } else { Ok(kzg_proof) }
+        if !eval {
+            Err(eyre!("ERROR : Assertion failed, not able to verify the proof."))
+        } else {
+            Ok(kzg_proof)
+        }
     }
 }
 

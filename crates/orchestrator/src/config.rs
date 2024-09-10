@@ -222,6 +222,10 @@ pub async fn build_da_client(settings_provider: &impl Settings) -> Box<dyn DaCli
             let config = AptosDaConfig::new_from_env();
             Box::new(config.build_client().await)
         }
+        "aptos" => {
+            let config = AptosDaConfig::new_from_env();
+            Box::new(config.build_client().await)
+        }
         _ => panic!("Unsupported DA layer"),
     }
 }
