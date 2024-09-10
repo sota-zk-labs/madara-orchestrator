@@ -36,7 +36,15 @@ RUN python3.9 --version && pip3.9 --version
 # Copy the current directory contents into the container
 COPY . .
 
+RUN cp -r /usr/local/rustup /rustup
+RUN --mount=type=cache,target=/usr/local/rustup cp -r /rustup /usr/local && rm -r /rustup
+RUN cp -r /usr/local/cargo /cargo
+RUN --mount=type=cache,target=/usr/local/cargo cp -r /cargo /usr/local && rm -r /cargo
 
+RUN --mount=type=cache,target=/usr/local/rustup \
+    --mount=type=cache,target=/usr/local/cargo \
+    --mount=type=cache,target=$HOME/app/target \
+    cargo build --release && cp $HOME/app/target/release/orchestrator ./orchestrator
 # Check rust version (this also installs version from rust-toolchain file)
 RUN rustup show
 
@@ -72,6 +80,7 @@ RUN apt-get -y update && \
 # Set the working directory
 WORKDIR /usr/local/bin
 
+COPY --from=builder home/root/app/orchestrator ./
 # Copy the compiled binary from the builder stage
 COPY --from=builder /usr/src/madara-orchestrator/target/release/orchestrator .
 
