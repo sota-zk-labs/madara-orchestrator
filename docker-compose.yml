@@ -25,3 +25,11 @@ services:
       - mongodb
     ports:
       - "9090:8081"
+  orchestrator:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    tty: true
+    depends_on:
+      - localstack
+      - mongodb
