@@ -7,6 +7,8 @@ use std::str::FromStr;
 
 use std::sync::Arc;
 
+use aptos_da_client::config::AptosDaConfig;
+use arc_swap::{ArcSwap, Guard};
 use aws_config::SdkConfig;
 use dotenvy::dotenv;
 use ethereum_da_client::config::EthereumDaConfig;
@@ -188,6 +190,10 @@ pub async fn build_da_client(settings_provider: &impl Settings) -> Box<dyn DaCli
         "ethereum" => {
             let config = EthereumDaConfig::new_with_settings(settings_provider)
                 .expect("Not able to build config from the given settings provider.");
+            Box::new(config.build_client().await)
+        }
+        "aptos" => {
+            let config = AptosDaConfig::new_from_env();
             Box::new(config.build_client().await)
         }
         _ => panic!("Unsupported DA layer"),
