@@ -52,6 +52,7 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - name: Format and clippy
         run: |
+          sudo apt install build-essential cmake pkg-config libudev-dev
           cargo fmt -- --check
           cargo clippy --no-deps -- -D warnings
           cargo clippy --tests --no-deps -- -D warnings

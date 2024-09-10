@@ -13,6 +13,8 @@ path = "src/main.rs"
 
 [dependencies]
 alloy = { workspace = true }
+aptos-da-client = { workspace = true, optional = true }
+arc-swap = { workspace = true }
 assert_matches = "1.5.0"
 async-std = "1.12.0"
 async-trait = { workspace = true }
@@ -87,8 +89,9 @@ tracing-opentelemetry = "0.26.0"
 tracing-subscriber = { workspace = true, features = ["env-filter"] }
 
 [features]
-default = ["ethereum", "with_mongodb", "with_sqs"]
+default = ["aptos", "ethereum", "with_mongodb", "with_sqs"]
 ethereum = ["ethereum-da-client"]
+aptos = ["aptos-da-client"]
 with_mongodb = ["mongodb"]
 with_sqs = ["omniqueue"]
 testing = []

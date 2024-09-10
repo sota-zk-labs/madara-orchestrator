@@ -6,6 +6,7 @@ use std::sync::Arc;
 use alloy::primitives::Address;
 #[cfg(feature = "testing")]
 use alloy::providers::RootProvider;
+use aptos_da_client::config::AptosDaConfig;
 use aws_config::meta::region::RegionProviderChain;
 use aws_config::{Region, SdkConfig};
 use aws_credential_types::Credentials;
@@ -215,6 +216,10 @@ pub async fn build_da_client(settings_provider: &impl Settings) -> Box<dyn DaCli
         "ethereum" => {
             let config = EthereumDaConfig::new_with_settings(settings_provider)
                 .expect("Not able to build config from the given settings provider.");
+            Box::new(config.build_client().await)
+        }
+        "aptos" => {
+            let config = AptosDaConfig::new_from_env();
             Box::new(config.build_client().await)
         }
         _ => panic!("Unsupported DA layer"),
