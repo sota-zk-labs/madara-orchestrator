@@ -6162,6 +6162,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4f2c92ceda6ceec50f43169f9ee8424fe2db276791afde7b2cd8bc084cb376ab"
 dependencies = [
  "log",
+ "regex",
 ]
 
 [[package]]
@@ -6173,6 +6174,7 @@ dependencies = [
  "anstream",
  "anstyle",
  "env_filter",
+ "humantime",
  "log",
 ]
 
@@ -7381,6 +7383,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "humantime"
+version = "2.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9a3a5bfb195931eeb336b2a7b4d761daec841b97f947d34394601737a7bba5e4"
+
+[[package]]
 name = "hyper"
 version = "0.14.30"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -7397,7 +7405,7 @@ dependencies = [
  "httpdate",
  "itoa",
  "pin-project-lite",
- "socket2 0.5.7",
+ "socket2 0.4.10",
  "tokio",
  "tower-service",
  "tracing",
@@ -9798,6 +9806,7 @@ dependencies = [
  "num-bigint 0.4.6",
  "num-traits 0.2.19",
  "omniqueue",
+ "prove_block",
  "prover-client-interface",
  "rstest 0.18.2",
  "serde",
@@ -9809,6 +9818,7 @@ dependencies = [
  "starknet-os",
  "starknet-settlement-client",
  "strum_macros 0.26.4",
+ "tempfile",
  "thiserror",
  "tokio",
  "tracing",
@@ -10960,6 +10970,39 @@ dependencies = [
 ]
 
 [[package]]
+name = "prove_block"
+version = "0.1.0"
+source = "git+https://github.com/keep-starknet-strange/snos?branch=notlesh/include-compiled-snos#db898dc45a8e36c900a3aa80c3d1dd1857d220cd"
+dependencies = [
+ "anyhow",
+ "blockifier",
+ "cairo-lang-starknet-classes",
+ "cairo-lang-utils",
+ "cairo-vm 1.0.1 (git+https://github.com/Moonsong-Labs/cairo-vm?rev=40ebe36e64ffa429ff18cba8ef0bd7d2c122ac12)",
+ "clap 4.5.14",
+ "env_logger",
+ "futures-core",
+ "log",
+ "num-bigint 0.4.6",
+ "pathfinder-common",
+ "pathfinder-crypto",
+ "pathfinder-serde",
+ "reqwest 0.11.27",
+ "rpc-client",
+ "rpc-replay",
+ "serde",
+ "serde_json",
+ "serde_with 3.9.0",
+ "starknet",
+ "starknet-os",
+ "starknet-os-types",
+ "starknet-types-core",
+ "starknet_api",
+ "thiserror",
+ "tokio",
+]
+
+[[package]]
 name = "prover-client-interface"
 version = "0.1.0"
 dependencies = [
@@ -11572,6 +11615,38 @@ dependencies = [
  "bitflags 2.6.0",
  "serde",
  "serde_derive",
+]
+
+[[package]]
+name = "rpc-client"
+version = "0.1.0"
+source = "git+https://github.com/keep-starknet-strange/snos?branch=notlesh/include-compiled-snos#db898dc45a8e36c900a3aa80c3d1dd1857d220cd"
+dependencies = [
+ "log",
+ "reqwest 0.11.27",
+ "serde",
+ "serde_json",
+ "starknet",
+ "starknet-os",
+ "starknet-types-core",
+ "thiserror",
+]
+
+[[package]]
+name = "rpc-replay"
+version = "0.1.0"
+source = "git+https://github.com/keep-starknet-strange/snos?branch=notlesh/include-compiled-snos#db898dc45a8e36c900a3aa80c3d1dd1857d220cd"
+dependencies = [
+ "blockifier",
+ "cairo-lang-starknet-classes",
+ "rpc-client",
+ "serde",
+ "serde_json",
+ "starknet",
+ "starknet-os-types",
+ "starknet_api",
+ "thiserror",
+ "tokio",
 ]
 
 [[package]]

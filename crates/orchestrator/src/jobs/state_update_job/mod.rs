@@ -108,7 +108,7 @@ impl Job for StateUpdateJob {
             .clone();
 
         // Read the metadata to get the blocks for which state update will be performed.
-        // We assume that blocks nbrs are formatted as follow: "2,3,4,5,6".
+        // We assume that blocks numbers are formatted as follows: "2,3,4,5,6".
         let mut block_numbers = self.get_block_numbers_from_metadata(job)?;
         self.validate_block_numbers(config.clone(), &block_numbers).await?;
 

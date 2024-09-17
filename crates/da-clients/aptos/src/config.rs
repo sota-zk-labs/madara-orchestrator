@@ -24,7 +24,7 @@ impl AptosDaConfig {
             node_url: settings.get_settings_or_panic("APTOS_NODE_URL"),
             private_key: settings.get_settings_or_panic("APTOS_PRIVATE_KEY"),
             module_address: settings.get_settings_or_panic("APTOS_MODULE_ADDRESS"),
-            chain_id: settings.get_settings_or_panic("CHAIN_ID"),
+            chain_id: settings.get_settings_or_panic("APTOS_CHAIN_ID"),
             trusted_setup: settings.get_settings_or_panic("APTOS_CRS_PATH"),
         }
     }

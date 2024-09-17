@@ -7,21 +7,15 @@ use async_trait::async_trait;
 use color_eyre::eyre::{eyre, Ok};
 use color_eyre::Result;
 use lazy_static::lazy_static;
-use mockall::{automock, predicate::*};
-use starknet::accounts::ConnectedAccount;
-use starknet::core::types::{ExecutionResult, TransactionReceipt};
-use starknet::providers::Provider;
-use starknet::{
-    accounts::{Account, Call, ExecutionEncoding, SingleOwnerAccount},
-    core::{
-        types::{BlockId, BlockTag, Felt, FunctionCall},
-        utils::get_selector_from_name,
-    },
-    providers::{jsonrpc::HttpTransport, JsonRpcClient},
-    signers::{LocalWallet, SigningKey},
-};
-
+use mockall::automock;
+use mockall::predicate::*;
 use settlement_client_interface::{SettlementClient, SettlementConfig, SettlementVerificationStatus};
+use starknet::accounts::{Account, Call, ConnectedAccount, ExecutionEncoding, SingleOwnerAccount};
+use starknet::core::types::{BlockId, BlockTag, ExecutionResult, Felt, FunctionCall, TransactionReceipt};
+use starknet::core::utils::get_selector_from_name;
+use starknet::providers::jsonrpc::HttpTransport;
+use starknet::providers::{JsonRpcClient, Provider};
+use starknet::signers::{LocalWallet, SigningKey};
 use utils::settings::Settings;
 
 use crate::config::StarknetSettlementConfig;
@@ -83,8 +77,8 @@ lazy_static! {
         get_selector_from_name("stateBlockNumber").expect("Invalid update state selector");
 }
 
-// TODO: Note that we already have an implementation of the appchain core contract client available here:
-// https://github.com/keep-starknet-strange/zaun/tree/main/crates/l3/appchain-core-contract-client
+// TODO: Note that we already have an implementation of the appchain core contract client available
+// here: https://github.com/keep-starknet-strange/zaun/tree/main/crates/l3/appchain-core-contract-client
 // However, this implementation uses different Felt types, and incorporating all of them
 // into this repository would introduce unnecessary complexity.
 // Therefore, we will wait for the update of starknet_rs in the Zaun repository before adapting
@@ -101,7 +95,7 @@ impl SettlementClient for StarknetSettlementClient {
     }
 
     /// Should be used to update state on core contract when DA is done in calldata
-    #[warn(deprecated)]
+    #[allow(deprecated)]
     async fn update_state_calldata(
         &self,
         program_output: Vec<[u8; 32]>,
@@ -160,10 +154,11 @@ impl SettlementClient for StarknetSettlementClient {
     }
 
     /// Wait for a pending tx to achieve finality
-    #[warn(unreachable_code)]
+    #[allow(dead_code)]
     async fn wait_for_tx_finality(&self, _tx_hash: &str) -> Result<()> {
         // let mut retries = 0;
-        // let duration_to_wait_between_polling = Duration::from_secs(self.tx_finality_retry_delay_in_seconds);
+        // let duration_to_wait_between_polling =
+        // Duration::from_secs(self.tx_finality_retry_delay_in_seconds);
         // sleep(duration_to_wait_between_polling).await;
         //
         // let tx_hash = Felt::from_hex((tx_hash)?;

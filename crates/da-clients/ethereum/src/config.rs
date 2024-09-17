@@ -1,11 +1,13 @@
-use crate::EthereumDaClient;
+use std::str::FromStr;
+
 use alloy::network::Ethereum;
 use alloy::providers::ProviderBuilder;
 use alloy::rpc::client::RpcClient;
 use serde::{Deserialize, Serialize};
-use std::str::FromStr;
 use url::Url;
 use utils::settings::Settings;
+
+use crate::EthereumDaClient;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct EthereumDaConfig {
