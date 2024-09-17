@@ -1,22 +1,19 @@
 use std::sync::Arc;
 
-use crate::config::{get_aws_config, Config, ProviderConfig};
-use crate::data_storage::DataStorage;
-use da_client_interface::DaClient;
+use da_client_interface::{DaClient, MockDaClient};
 use httpmock::MockServer;
-use starknet::providers::jsonrpc::HttpTransport;
-use starknet::providers::JsonRpcClient;
-
-use da_client_interface::MockDaClient;
 use prover_client_interface::{MockProverClient, ProverClient};
 use settlement_client_interface::{MockSettlementClient, SettlementClient};
+use starknet::providers::jsonrpc::HttpTransport;
+use starknet::providers::JsonRpcClient;
+use utils::settings::env::EnvSettingsProvider;
 
 use crate::alerts::Alerts;
-use crate::data_storage::MockDataStorage;
+use crate::config::{get_aws_config, Config, ProviderConfig};
+use crate::data_storage::{DataStorage, MockDataStorage};
 use crate::database::{Database, MockDatabase};
 use crate::queue::{MockQueueProvider, QueueProvider};
 use crate::tests::common::{create_sns_arn, create_sqs_queues, drop_database};
-use utils::settings::env::EnvSettingsProvider;
 
 // Inspiration : https://rust-unofficial.github.io/patterns/patterns/creational/builder.html
 // TestConfigBuilder allows to heavily customise the global configs based on the test's requirement.
@@ -213,15 +210,6 @@ impl TestConfigBuilder {
 pub mod implement_client {
     use std::sync::Arc;
 
-    use crate::alerts::{Alerts, MockAlerts};
-    use crate::config::{
-        build_alert_client, build_da_client, build_database_client, build_prover_service, build_queue_client,
-        build_settlement_client, ProviderConfig,
-    };
-    use crate::data_storage::{DataStorage, MockDataStorage};
-    use crate::database::{Database, MockDatabase};
-    use crate::queue::{MockQueueProvider, QueueProvider};
-    use crate::tests::common::get_storage_client;
     use da_client_interface::{DaClient, MockDaClient};
     use httpmock::MockServer;
     use prover_client_interface::{MockProverClient, ProverClient};
@@ -232,8 +220,16 @@ pub mod implement_client {
     use utils::settings::env::EnvSettingsProvider;
     use utils::settings::Settings;
 
-    use super::ConfigType;
-    use super::MockType;
+    use super::{ConfigType, MockType};
+    use crate::alerts::{Alerts, MockAlerts};
+    use crate::config::{
+        build_alert_client, build_da_client, build_database_client, build_prover_service, build_queue_client,
+        build_settlement_client, ProviderConfig,
+    };
+    use crate::data_storage::{DataStorage, MockDataStorage};
+    use crate::database::{Database, MockDatabase};
+    use crate::queue::{MockQueueProvider, QueueProvider};
+    use crate::tests::common::get_storage_client;
 
     macro_rules! implement_mock_client_conversion {
         ($client_type:ident, $mock_variant:ident) => {

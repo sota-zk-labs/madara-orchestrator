@@ -9,19 +9,18 @@ use color_eyre::eyre::WrapErr;
 use lazy_static::lazy_static;
 use num_bigint::{BigUint, ToBigUint};
 use num_traits::{Num, Zero};
-use starknet::core::types::{BlockId, FieldElement, MaybePendingStateUpdate, StateUpdate};
+use starknet::core::types::{BlockId, Felt, MaybePendingStateUpdate, StateUpdate};
 use starknet::providers::Provider;
 use starknet_core::types::{ContractStorageDiffItem, DeclaredClassItem};
 use thiserror::Error;
 use tracing::log;
 use uuid::Uuid;
 
+use super::types::{JobItem, JobStatus, JobType, JobVerificationStatus};
+use super::{Job, JobError, OtherError};
 use crate::config::Config;
 use crate::constants::BLOB_DATA_FILE_NAME;
 use crate::jobs::state_update_job::utils::biguint_vec_to_u8_vec;
-
-use super::types::{JobItem, JobStatus, JobType, JobVerificationStatus};
-use super::{Job, JobError, OtherError};
 
 lazy_static! {
     /// EIP-4844 BLS12-381 modulus.
@@ -51,7 +50,10 @@ pub enum DaError {
     #[error("Blob size must be at least 32 bytes to accommodate a single FieldElement/BigUint, but was {blob_size:?}")]
     InsufficientBlobSize { blob_size: u64 },
 
-    #[error("Exceeded the maximum number of blobs per transaction: allowed {max_blob_per_txn:?}, found {current_blob_length:?} for block {block_no:?} and job id {job_id:?}")]
+    #[error(
+        "Exceeded the maximum number of blobs per transaction: allowed {max_blob_per_txn:?}, found \
+         {current_blob_length:?} for block {block_no:?} and job id {job_id:?}"
+    )]
     MaxBlobsLimitExceeded { max_blob_per_txn: u64, current_blob_length: u64, block_no: String, job_id: Uuid },
 
     #[error("Other error: {0}")]
@@ -189,7 +191,7 @@ pub fn fft_transformation(elements: Vec<BigUint>) -> Vec<BigUint> {
     transform
 }
 
-pub fn convert_to_biguint(elements: Vec<FieldElement>) -> Vec<BigUint> {
+pub fn convert_to_biguint(elements: Vec<Felt>) -> Vec<BigUint> {
     // Initialize the vector with 4096 BigUint zeros
     let mut biguint_vec = vec![BigUint::zero(); 4096];
 
@@ -239,16 +241,16 @@ pub async fn state_update_to_blob_data(
     block_no: u64,
     state_update: StateUpdate,
     config: Arc<Config>,
-) -> color_eyre::Result<Vec<FieldElement>> {
+) -> color_eyre::Result<Vec<Felt>> {
     let mut state_diff = state_update.state_diff;
 
-    let mut blob_data: Vec<FieldElement> = vec![FieldElement::from(state_diff.storage_diffs.len())];
+    let mut blob_data: Vec<Felt> = vec![Felt::from(state_diff.storage_diffs.len())];
 
-    let deployed_contracts: HashMap<FieldElement, FieldElement> =
+    let deployed_contracts: HashMap<Felt, Felt> =
         state_diff.deployed_contracts.into_iter().map(|item| (item.address, item.class_hash)).collect();
-    let replaced_classes: HashMap<FieldElement, FieldElement> =
+    let replaced_classes: HashMap<Felt, Felt> =
         state_diff.replaced_classes.into_iter().map(|item| (item.contract_address, item.class_hash)).collect();
-    let mut nonces: HashMap<FieldElement, FieldElement> =
+    let mut nonces: HashMap<Felt, Felt> =
         state_diff.nonces.into_iter().map(|item| (item.contract_address, item.nonce)).collect();
 
     // sort storage diffs
@@ -263,7 +265,7 @@ pub async fn state_update_to_blob_data(
         // @note: if nonce is null and there is some len of writes, make an api call to get the contract
         // nonce for the block
 
-        if nonce.is_none() && !storage_entries.is_empty() && address != FieldElement::ONE {
+        if nonce.is_none() && !storage_entries.is_empty() && address != Felt::ONE {
             let get_current_nonce_result = config
                 .starknet_client()
                 .get_nonce(BlockId::Number(block_no), address)
@@ -287,7 +289,7 @@ pub async fn state_update_to_blob_data(
         }
     }
     // Handle declared classes
-    blob_data.push(FieldElement::from(state_diff.declared_classes.len()));
+    blob_data.push(Felt::from(state_diff.declared_classes.len()));
 
     // sort storage diffs
     state_diff.declared_classes.sort_by_key(|class| class.class_hash);
@@ -317,7 +319,7 @@ async fn store_blob_data(blob_data: Vec<BigUint>, block_number: u64, config: Arc
 /// DA word encoding:
 /// |---padding---|---class flag---|---new nonce---|---num changes---|
 ///     127 bits        1 bit           64 bits          64 bits
-fn da_word(class_flag: bool, nonce_change: Option<FieldElement>, num_changes: u64) -> FieldElement {
+fn da_word(class_flag: bool, nonce_change: Option<Felt>, num_changes: u64) -> Felt {
     // padding of 127 bits
     let mut binary_string = "0".repeat(127);
 
@@ -330,7 +332,12 @@ fn da_word(class_flag: bool, nonce_change: Option<FieldElement>, num_changes: u6
 
     // checking for nonce here
     if let Some(_new_nonce) = nonce_change {
-        let bytes: [u8; 32] = nonce_change.expect("Not able to convert the nonce_change var into [u8; 32] type. Possible Error : Improper parameter length.").to_bytes_be();
+        let bytes: [u8; 32] = nonce_change
+            .expect(
+                "Not able to convert the nonce_change var into [u8; 32] type. Possible Error : Improper parameter \
+                 length.",
+            )
+            .to_bytes_be();
         let biguint = BigUint::from_bytes_be(&bytes);
         let binary_string_local = format!("{:b}", biguint);
         let padded_binary_string = format!("{:0>64}", binary_string_local);
@@ -349,7 +356,7 @@ fn da_word(class_flag: bool, nonce_change: Option<FieldElement>, num_changes: u6
     // Now convert the BigUint to a decimal string
     let decimal_string = biguint.to_str_radix(10);
 
-    FieldElement::from_dec_str(&decimal_string).expect("issue while converting to fieldElement")
+    Felt::from_dec_str(&decimal_string).expect("issue while converting to fieldElement")
 }
 
 #[cfg(test)]
@@ -361,6 +368,7 @@ pub mod test {
 
     use ::serde::{Deserialize, Serialize};
     use color_eyre::Result;
+    use da_client_interface::MockDaClient;
     use httpmock::prelude::*;
     use majin_blob_core::blob;
     use majin_blob_types::serde;
@@ -368,17 +376,16 @@ pub mod test {
     use serde_json::json;
     use starknet::providers::jsonrpc::HttpTransport;
     use starknet::providers::JsonRpcClient;
-    use starknet_core::types::{FieldElement, StateUpdate};
+    use starknet_core::types::{Felt, FieldElement, StateUpdate};
     use url::Url;
-
-    use da_client_interface::MockDaClient;
 
     use crate::jobs::da_job::da_word;
 
-    /// Tests `da_word` function with various inputs for class flag, new nonce, and number of changes.
-    /// Verifies that `da_word` produces the correct FieldElement based on the provided parameters.
-    /// Uses test cases with different combinations of inputs and expected output strings.
-    /// Asserts the function's correctness by comparing the computed and expected FieldElements.
+    /// Tests `da_word` function with various inputs for class flag, new nonce, and number of
+    /// changes. Verifies that `da_word` produces the correct FieldElement based on the provided
+    /// parameters. Uses test cases with different combinations of inputs and expected output
+    /// strings. Asserts the function's correctness by comparing the computed and expected
+    /// FieldElements.
     #[rstest]
     #[case(false, 1, 1, "18446744073709551617")]
     #[case(false, 1, 0, "18446744073709551616")]
@@ -390,16 +397,17 @@ pub mod test {
         #[case] num_changes: u64,
         #[case] expected: String,
     ) {
-        let new_nonce = if new_nonce > 0 { Some(FieldElement::from(new_nonce)) } else { None };
+        let new_nonce = if new_nonce > 0 { Some(Felt::from(new_nonce)) } else { None };
         let da_word = da_word(class_flag, new_nonce, num_changes);
-        let expected = FieldElement::from_dec_str(expected.as_str()).unwrap();
+        let expected = Felt::from_dec_str(expected.as_str()).unwrap();
         assert_eq!(da_word, expected);
     }
 
-    /// Tests `state_update_to_blob_data` conversion with different state update files and block numbers.
-    /// Mocks DA client and storage client interactions for the test environment.
+    /// Tests `state_update_to_blob_data` conversion with different state update files and block
+    /// numbers. Mocks DA client and storage client interactions for the test environment.
     /// Compares the generated blob data against expected values to ensure correctness.
-    /// Verifies the data integrity by checking that the parsed state diffs match the expected diffs.
+    /// Verifies the data integrity by checking that the parsed state diffs match the expected
+    /// diffs.
     #[rstest]
     #[case(
         631861,
@@ -432,10 +440,8 @@ pub mod test {
         #[case] file_path: &str,
         #[case] nonce_file_path: &str,
     ) {
-        use crate::{
-            jobs::da_job::{convert_to_biguint, state_update_to_blob_data},
-            tests::config::TestConfigBuilder,
-        };
+        use crate::jobs::da_job::{convert_to_biguint, state_update_to_blob_data};
+        use crate::tests::config::TestConfigBuilder;
 
         let server = MockServer::start();
         let mut da_client = MockDaClient::new();
@@ -540,7 +546,7 @@ pub mod test {
             let nonce = entry.nonce.clone();
             let response = json!({ "id": 1,"jsonrpc":"2.0","result": nonce });
             let field_element =
-                FieldElement::from_dec_str(&address).expect("issue while converting the hex to field").to_bytes_be();
+                Felt::from_dec_str(&address).expect("issue while converting the hex to field").to_bytes_be();
             let hex_field_element = vec_u8_to_hex_string(&field_element);
 
             server.mock(|when, then| {
@@ -555,10 +561,6 @@ pub mod test {
 
         let mut new_hex_chars = hex_chars.join("");
         new_hex_chars = new_hex_chars.trim_start_matches('0').to_string();
-        if new_hex_chars.is_empty() {
-            "0x0".to_string()
-        } else {
-            format!("0x{}", new_hex_chars)
-        }
+        if new_hex_chars.is_empty() { "0x0".to_string() } else { format!("0x{}", new_hex_chars) }
     }
 }

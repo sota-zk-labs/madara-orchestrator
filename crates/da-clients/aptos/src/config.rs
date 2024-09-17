@@ -4,11 +4,8 @@ use std::str::FromStr;
 use aptos_sdk::rest_client::Client;
 use aptos_sdk::types::chain_id::ChainId;
 use aptos_sdk::types::LocalAccount;
-use async_trait::async_trait;
 use c_kzg::KzgSettings;
-use da_client_interface::DaConfig;
-use dotenvy::dotenv;
-use utils::env_utils::get_env_var_or_panic;
+use utils::settings::Settings;
 
 use crate::AptosDaClient;
 
@@ -21,20 +18,18 @@ pub struct AptosDaConfig {
     pub trusted_setup: String,
 }
 
-#[async_trait]
-impl DaConfig<AptosDaClient> for AptosDaConfig {
-    fn new_from_env() -> Self {
-        dotenv().expect("Failed to load .env file");
-        let node_url = get_env_var_or_panic("APTOS_NODE_URL");
-        let private_key = get_env_var_or_panic("APTOS_PRIVATE_KEY");
-        let module_address = get_env_var_or_panic("APTOS_MODULE_ADDRESS");
-        let chain_id = get_env_var_or_panic("APTOS_CHAIN_ID");
-        let trusted_setup = get_env_var_or_panic("APTOS_CRS_PATH");
-
-        Self { chain_id, node_url, private_key, module_address, trusted_setup }
+impl AptosDaConfig {
+    pub fn new_with_settings(settings: &impl Settings) -> Self {
+        Self {
+            node_url: settings.get_settings_or_panic("APTOS_NODE_URL"),
+            private_key: settings.get_settings_or_panic("APTOS_PRIVATE_KEY"),
+            module_address: settings.get_settings_or_panic("APTOS_MODULE_ADDRESS"),
+            chain_id: settings.get_settings_or_panic("CHAIN_ID"),
+            trusted_setup: settings.get_settings_or_panic("APTOS_CRS_PATH"),
+        }
     }
 
-    async fn build_client(&self) -> AptosDaClient {
+    pub async fn build_client(&self) -> AptosDaClient {
         let client = Client::new(self.node_url.parse().unwrap());
         let account = LocalAccount::from_private_key(&self.private_key, 0).unwrap();
         let module_address = self.module_address.parse().expect("Invalid module address");

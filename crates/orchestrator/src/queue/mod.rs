@@ -1,14 +1,16 @@
 pub mod job_queue;
 pub mod sqs;
 
-use std::{sync::Arc, time::Duration};
+use std::sync::Arc;
+use std::time::Duration;
 
 use async_trait::async_trait;
 use color_eyre::Result as EyreResult;
 use mockall::automock;
 use omniqueue::{Delivery, QueueError};
 
-use crate::{config::Config, jobs::JobError};
+use crate::config::Config;
+use crate::jobs::JobError;
 
 /// The QueueProvider trait is used to define the methods that a queue
 /// should implement to be used as a queue for the orchestrator. The

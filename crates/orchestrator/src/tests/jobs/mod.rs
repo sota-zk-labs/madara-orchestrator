@@ -9,18 +9,14 @@ use rstest::rstest;
 use tokio::time::sleep;
 use uuid::Uuid;
 
+use super::database::build_job_item;
 use crate::jobs::constants::{JOB_PROCESS_ATTEMPT_METADATA_KEY, JOB_VERIFICATION_ATTEMPT_METADATA_KEY};
-use crate::jobs::handle_job_failure;
 use crate::jobs::job_handler_factory::mock_factory;
-use crate::jobs::types::JobType;
-use crate::jobs::types::{ExternalId, JobItem, JobVerificationStatus};
-use crate::jobs::{create_job, increment_key_in_metadata, process_job, verify_job, Job, MockJob};
+use crate::jobs::types::{ExternalId, JobItem, JobStatus, JobType, JobVerificationStatus};
+use crate::jobs::{create_job, handle_job_failure, increment_key_in_metadata, process_job, verify_job, Job, MockJob};
 use crate::queue::job_queue::{JOB_PROCESSING_QUEUE, JOB_VERIFICATION_QUEUE};
 use crate::tests::common::MessagePayloadType;
-use crate::tests::config::ConfigType;
-use crate::{jobs::types::JobStatus, tests::config::TestConfigBuilder};
-
-use super::database::build_job_item;
+use crate::tests::config::{ConfigType, TestConfigBuilder};
 
 #[cfg(test)]
 pub mod da_job;
@@ -93,9 +89,9 @@ async fn create_job_job_exists_in_db_works() {
     let database_client = services.config.database();
     database_client.create_job(job_item).await.unwrap();
 
-    assert!(create_job(JobType::ProofCreation, "0".to_string(), HashMap::new(), services.config.clone())
-        .await
-        .is_err());
+    assert!(
+        create_job(JobType::ProofCreation, "0".to_string(), HashMap::new(), services.config.clone()).await.is_err()
+    );
 
     // Waiting for 5 secs for message to be passed into the queue
     sleep(Duration::from_secs(5)).await;
@@ -122,9 +118,9 @@ async fn create_job_job_handler_is_not_implemented_panics() {
     let ctx = mock_factory::get_job_handler_context();
     ctx.expect().times(1).returning(|_| panic!("Job type not implemented yet."));
 
-    assert!(create_job(JobType::ProofCreation, "0".to_string(), HashMap::new(), services.config.clone())
-        .await
-        .is_err());
+    assert!(
+        create_job(JobType::ProofCreation, "0".to_string(), HashMap::new(), services.config.clone()).await.is_err()
+    );
 
     // Waiting for 5 secs for message to be passed into the queue
     sleep(Duration::from_secs(5)).await;

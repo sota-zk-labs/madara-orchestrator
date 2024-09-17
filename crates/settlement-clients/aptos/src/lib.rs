@@ -1,8 +1,9 @@
 #![allow(missing_docs)]
 #![allow(clippy::missing_docs_in_private_items)]
 
-use std::path::{PathBuf};
+use std::path::PathBuf;
 use std::str::FromStr;
+
 use alloy::eips::eip4844::BYTES_PER_BLOB;
 use aptos_sdk::crypto::HashValue;
 use aptos_sdk::move_types::account_address::AccountAddress;
@@ -71,10 +72,13 @@ impl AptosSettlementClient {
             &KZG_SETTINGS,
         )?;
 
-        if !eval { Err(eyre!("ERROR : Assertion failed, not able to verify the proof.")) } else { color_eyre::eyre::Ok(kzg_proof) }
+        if !eval {
+            Err(eyre!("ERROR : Assertion failed, not able to verify the proof."))
+        } else {
+            color_eyre::eyre::Ok(kzg_proof)
+        }
     }
 }
-
 
 impl From<AptosSettlementConfig> for AptosSettlementClient {
     fn from(config: AptosSettlementConfig) -> Self {
@@ -116,7 +120,7 @@ impl SettlementClient for AptosSettlementClient {
                     &MoveValue::U256(U256::from_le_bytes(&onchain_data_hash)),
                     &MoveValue::U256(U256::from(onchain_data_size as u128)),
                 ]
-                    .into_iter(),
+                .into_iter(),
             ),
         ));
 
@@ -161,7 +165,7 @@ impl SettlementClient for AptosSettlementClient {
                     ),
                     &MoveValue::vector_u8(kzg_proof.to_vec()),
                 ]
-                    .into_iter(),
+                .into_iter(),
             ),
         ));
 
@@ -214,9 +218,9 @@ impl SettlementClient for AptosSettlementClient {
                     STARKNET_VALIDITY,
                     STATE_BLOCK_NUMBER
                 )
-                    .as_str(),
+                .as_str(),
             )
-                .expect("Invalid function name"),
+            .expect("Invalid function name"),
         };
         let response = client.view(&request, None).await?.into_inner();
 
@@ -225,12 +229,7 @@ impl SettlementClient for AptosSettlementClient {
     }
 
     async fn get_nonce(&self) -> color_eyre::Result<u64> {
-        Ok(self
-            .client
-            .get_account(self.account.address())
-            .await?
-            .into_inner()
-            .sequence_number)
+        Ok(self.client.get_account(self.account.address()).await?.into_inner().sequence_number)
     }
 }
 
@@ -254,8 +253,6 @@ mod test {
     use crate::helper::build_transaction;
     use crate::{AptosSettlementClient, STARKNET_VALIDITY};
 
-    use super::*;
-
     const REGISTER_FACT: &str = "register_fact";
     const FACT_REGISTRY: &str = "fact_registry";
     const INIT_CONTRACT_STATE: &str = "initialize_contract_state";
@@ -274,7 +271,7 @@ mod test {
                     &MoveValue::U256(u256::U256::from(0u128)),
                     &MoveValue::U256(u256::U256::from(0u128)),
                 ]
-                    .into_iter(),
+                .into_iter(),
             ),
         ));
         let tx = build_transaction(payload, &settlement_client.account, settlement_client.chain_id);
@@ -330,6 +327,7 @@ mod test {
                         &module_account.private_key().to_encoded_string().unwrap(),
                         &named_address,
                         false,
+                        false,
                     )
                     .await
                     .unwrap();
@@ -348,7 +346,7 @@ mod test {
                     &settlement_client,
                     "38a811b0f756a978eda5dd75bdaecc4942f7eba409805c88edf1442dcaea2cdc",
                 )
-                    .await;
+                .await;
 
                 let program_output: Vec<[u8; 32]> = vec![
                     u256::U256::from(0u128).to_le_bytes(), // Global root
@@ -378,6 +376,6 @@ mod test {
                 Ok(())
             })
         })
-            .await
+        .await
     }
 }

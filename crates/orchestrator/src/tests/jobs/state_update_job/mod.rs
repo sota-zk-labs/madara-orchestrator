@@ -9,11 +9,10 @@ use httpmock::prelude::*;
 use lazy_static::lazy_static;
 use mockall::predicate::{always, eq};
 use rstest::*;
+use settlement_client_interface::MockSettlementClient;
 use starknet::providers::jsonrpc::HttpTransport;
 use starknet::providers::JsonRpcClient;
 use url::Url;
-
-use settlement_client_interface::MockSettlementClient;
 
 use crate::constants::{BLOB_DATA_FILE_NAME, PROGRAM_OUTPUT_FILE_NAME, SNOS_OUTPUT_FILE_NAME};
 use crate::data_storage::MockDataStorage;
@@ -104,8 +103,8 @@ async fn test_process_job_works(
     // Setting random nonce
     settlement_client.expect_get_nonce().with().returning(move || Ok(2));
 
-    // Building a temp config that will be used by `fetch_blob_data_for_block` and `fetch_snos_for_block`
-    // functions while fetching the blob data from storage client.
+    // Building a temp config that will be used by `fetch_blob_data_for_block` and
+    // `fetch_snos_for_block` functions while fetching the blob data from storage client.
     let services = TestConfigBuilder::new()
         .configure_storage_client(ConfigType::Actual)
         .configure_settlement_client(settlement_client.into())
@@ -240,7 +239,8 @@ async fn process_job_works_unit_test() {
             .with(eq(program_output_key))
             .returning(move |_| Ok(Bytes::from(program_output.clone())));
 
-        // let nonce = settlement_client.get_nonce().await.expect("Unable to fetch nonce for settlement client.");
+        // let nonce = settlement_client.get_nonce().await.expect("Unable to fetch nonce for settlement
+        // client.");
         settlement_client.expect_get_nonce().returning(|| Ok(1));
 
         settlement_client

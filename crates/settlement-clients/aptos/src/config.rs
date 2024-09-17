@@ -1,6 +1,5 @@
-use dotenvy::dotenv;
 use settlement_client_interface::SettlementConfig;
-use utils::env_utils::get_env_var_or_panic;
+use utils::settings::Settings;
 
 pub struct AptosSettlementConfig {
     pub node_url: String,
@@ -10,12 +9,12 @@ pub struct AptosSettlementConfig {
 }
 
 impl SettlementConfig for AptosSettlementConfig {
-    fn new_from_env() -> Self {
-        dotenv().expect("Failed to load .env file");
-        let node_url = get_env_var_or_panic("APTOS_NODE_URL");
-        let private_key = get_env_var_or_panic("APTOS_PRIVATE_KEY");
-        let module_address = get_env_var_or_panic("APTOS_MODULE_ADDRESS");
-        let chain_id = get_env_var_or_panic("CHAIN_ID");
-        AptosSettlementConfig { chain_id, node_url, private_key, module_address }
+    fn new_with_settings(settings: &impl Settings) -> Self {
+        Self {
+            node_url: settings.get_settings_or_panic("APTOS_NODE_URL"),
+            private_key: settings.get_settings_or_panic("APTOS_PRIVATE_KEY"),
+            module_address: settings.get_settings_or_panic("APTOS_MODULE_ADDRESS"),
+            chain_id: settings.get_settings_or_panic("CHAIN_ID"),
+        }
     }
 }

@@ -1,38 +1,35 @@
 #[cfg(feature = "testing")]
+use std::str::FromStr;
+use std::sync::Arc;
+
+#[cfg(feature = "testing")]
 use alloy::primitives::Address;
 #[cfg(feature = "testing")]
 use alloy::providers::RootProvider;
-#[cfg(feature = "testing")]
-use std::str::FromStr;
-
-use std::sync::Arc;
-
 use aptos_da_client::config::AptosDaConfig;
-use arc_swap::{ArcSwap, Guard};
-use aws_config::SdkConfig;
+use aptos_settlement_client::config::AptosSettlementConfig;
+use aptos_settlement_client::AptosSettlementClient;
+use aws_config::meta::region::RegionProviderChain;
+use aws_config::{Region, SdkConfig};
+use aws_credential_types::Credentials;
+use da_client_interface::DaClient;
 use dotenvy::dotenv;
 use ethereum_da_client::config::EthereumDaConfig;
-use starknet::providers::jsonrpc::HttpTransport;
-use starknet::providers::{JsonRpcClient, Url};
-
-use da_client_interface::DaClient;
 use ethereum_settlement_client::EthereumSettlementClient;
 use prover_client_interface::ProverClient;
-use settlement_client_interface::SettlementClient;
+use settlement_client_interface::{SettlementClient, SettlementConfig};
 use sharp_service::SharpProverService;
+use starknet::providers::jsonrpc::HttpTransport;
+use starknet::providers::{JsonRpcClient, Url};
 use starknet_settlement_client::StarknetSettlementClient;
 use utils::env_utils::get_env_var_or_panic;
+use utils::settings::env::EnvSettingsProvider;
+use utils::settings::Settings;
 
 use crate::alerts::aws_sns::AWSSNS;
 use crate::alerts::Alerts;
 use crate::data_storage::aws_s3::AWSS3;
 use crate::data_storage::DataStorage;
-use aws_config::meta::region::RegionProviderChain;
-use aws_config::Region;
-use aws_credential_types::Credentials;
-use utils::settings::env::EnvSettingsProvider;
-use utils::settings::Settings;
-
 use crate::database::mongodb::MongoDb;
 use crate::database::Database;
 use crate::queue::sqs::SqsQueue;
@@ -193,7 +190,7 @@ pub async fn build_da_client(settings_provider: &impl Settings) -> Box<dyn DaCli
             Box::new(config.build_client().await)
         }
         "aptos" => {
-            let config = AptosDaConfig::new_from_env();
+            let config = AptosDaConfig::new_with_settings(settings_provider);
             Box::new(config.build_client().await)
         }
         _ => panic!("Unsupported DA layer"),
@@ -227,6 +224,10 @@ pub async fn build_settlement_client(settings_provider: &impl Settings) -> Box<d
             }
         }
         "starknet" => Box::new(StarknetSettlementClient::new_with_settings(settings_provider).await),
+        "aptos" => {
+            let aptos_config = AptosSettlementConfig::new_with_settings(settings_provider);
+            Box::new(AptosSettlementClient::from(aptos_config))
+        }
         _ => panic!("Unsupported Settlement layer"),
     }
 }

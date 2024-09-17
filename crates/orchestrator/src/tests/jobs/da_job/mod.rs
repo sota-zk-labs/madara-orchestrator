@@ -3,19 +3,17 @@ use std::collections::HashMap;
 use assert_matches::assert_matches;
 use chrono::{SubsecRound, Utc};
 use color_eyre::eyre::eyre;
+use da_client_interface::MockDaClient;
 use mockall::predicate::always;
 use rstest::rstest;
 use serde_json::json;
 use starknet_core::types::{FieldElement, MaybePendingStateUpdate, PendingStateUpdate, StateDiff};
 use uuid::Uuid;
 
-use da_client_interface::MockDaClient;
-
 use crate::jobs::da_job::test::{get_nonce_attached, read_state_update_from_file};
 use crate::jobs::da_job::{DaError, DaJob};
 use crate::jobs::types::{ExternalId, JobItem, JobStatus, JobType};
-use crate::jobs::Job;
-use crate::jobs::JobError;
+use crate::jobs::{Job, JobError};
 use crate::tests::common::drop_database;
 use crate::tests::config::{ConfigType, TestConfigBuilder};
 

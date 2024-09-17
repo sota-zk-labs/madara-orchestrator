@@ -3,7 +3,6 @@ pub mod constants;
 use std::collections::HashMap;
 use std::sync::Arc;
 
-use crate::config::ProviderConfig;
 use ::uuid::Uuid;
 use aws_config::SdkConfig;
 use aws_sdk_sns::error::SdkError;
@@ -15,6 +14,7 @@ use serde::Deserialize;
 use utils::env_utils::get_env_var_or_panic;
 use utils::settings::env::EnvSettingsProvider;
 
+use crate::config::ProviderConfig;
 use crate::data_storage::aws_s3::AWSS3;
 use crate::data_storage::DataStorage;
 use crate::database::mongodb::MongoDb;
