@@ -9,6 +9,7 @@ use da_job::DaError;
 use mockall::automock;
 use mockall_double::double;
 use proving_job::ProvingError;
+use snos_job::SnosError;
 use state_update_job::StateUpdateError;
 use tracing::log;
 use uuid::Uuid;
@@ -52,6 +53,9 @@ pub enum JobError {
 
     #[error("Proving Error: {0}")]
     StateUpdateJobError(#[from] StateUpdateError),
+
+    #[error("Snos Error: {0}")]
+    SnosJobError(#[from] SnosError),
 
     #[error("Queue Handling Error: {0}")]
     ConsumptionError(#[from] ConsumptionError),
