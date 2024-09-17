@@ -25,6 +25,7 @@ authors = ["Apoorv Sadana <@apoorvsadana>"]
 
 [workspace.dependencies]
 num = { version = "0.4.1" }
+arc-swap = { version = "1.7.1" }
 async-trait = { version = "0.1.77" }
 alloy = { version = "0.2.1", features = [
   "full",
@@ -61,7 +62,6 @@ reqwest = { version = "0.12.7", features = [
 rstest = "0.18.2"
 serde = { version = "1.0.197", features = ["derive"] }
 serde_json = "1.0.114"
-stark_evm_adapter = "0.1.1"
 starknet = "0.11.0"
 starknet-core = "0.11.1"
 tempfile = "3.8.1"
@@ -81,10 +81,11 @@ stark_evm_adapter = "0.1.1"
 hex = "0.4"
 itertools = "0.13.0"
 mockall = "0.13.0"
-testcontainers = "0.18.0"
+testcontainers = "0.22.0"
+test-log = "0.2.16"
 
 # Cairo VM
-cairo-vm = { version = "1.0.0-rc5", features = [
+cairo-vm = { git = "https://github.com/Moonsong-Labs/cairo-vm", rev = "40ebe36e64ffa429ff18cba8ef0bd7d2c122ac12", features = [
   "extensive_hints",
   "cairo-1-hints",
 ] }
@@ -93,7 +94,8 @@ cairo-vm = { version = "1.0.0-rc5", features = [
 # can deserialize our snos input json into a StarknetOsInput struct.
 # TODO: update back to the main repo once it's merged
 # Sharp (Starkware)
-snos = { git = "https://github.com/keep-starknet-strange/snos" }
+snos = { git = "https://github.com/keep-starknet-strange/snos", package = "starknet-os", branch = "notlesh/include-compiled-snos" }
+prove_block = { git = "https://github.com/keep-starknet-strange/snos", branch = "notlesh/include-compiled-snos" }
 
 # Madara prover API
 madara-prover-common = { git = "https://github.com/Moonsong-Labs/madara-prover-api", branch = "od/use-latest-cairo-vm" }
