@@ -1,39 +1,29 @@
-use async_std::stream::StreamExt;
-use futures::TryStreamExt;
 use std::collections::HashMap;
 
+use async_std::stream::StreamExt;
 use async_trait::async_trait;
 use chrono::{SubsecRound, Utc};
 use color_eyre::eyre::eyre;
 use color_eyre::Result;
-use mongodb::bson::{Bson, Document};
-use mongodb::options::{FindOneOptions, FindOptions, UpdateOptions};
-use mongodb::{
-    bson,
-    bson::doc,
-    options::{ClientOptions, ServerApi, ServerApiVersion},
-    Client, Collection,
-};
-use utils::settings::Settings;
+use futures::TryStreamExt;
+use mongodb::bson::{doc, Bson, Document};
+use mongodb::options::{ClientOptions, FindOneOptions, FindOptions, ServerApi, ServerApiVersion, UpdateOptions};
+use mongodb::{bson, Client, Collection};
 use uuid::Uuid;
 
 use crate::database::mongodb::config::MongoDbConfig;
-use crate::database::{Database, DatabaseConfig};
+use crate::database::Database;
 use crate::jobs::types::{JobItem, JobStatus, JobType};
 
 pub mod config;
-
-pub const MONGO_DB_SETTINGS: &str = "mongodb";
 
 pub struct MongoDb {
     client: Client,
 }
 
 impl MongoDb {
-    pub async fn new_with_settings(settings: &impl Settings) -> Self {
-        let mongo_db_settings = MongoDbConfig::new_with_settings(settings);
-        let mut client_options =
-            ClientOptions::parse(mongo_db_settings.url).await.expect("Failed to parse MongoDB Url");
+    pub async fn new(config: MongoDbConfig) -> Self {
+        let mut client_options = ClientOptions::parse(config.url).await.expect("Failed to parse MongoDB Url");
         // Set the server_api field of the client_options object to set the version of the Stable API on the
         // client
         let server_api = ServerApi::builder().version(ServerApiVersion::V1).build();
@@ -42,9 +32,9 @@ impl MongoDb {
         let client = Client::with_options(client_options).expect("Failed to create MongoDB client");
         // Ping the server to see if you can connect to the cluster
         client.database("admin").run_command(doc! {"ping": 1}, None).await.expect("Failed to ping MongoDB deployment");
-        log::debug!("Pinged your deployment. You successfully connected to MongoDB!");
+        println!("Pinged your deployment. You successfully connected to MongoDB!");
 
-        Self { client }
+        MongoDb { client }
     }
 
     /// Mongodb client uses Arc internally, reducing the cost of clone.

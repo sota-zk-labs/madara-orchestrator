@@ -13,6 +13,8 @@ use utils::settings::env::EnvSettingsProvider;
 
 use crate::constants::{CAIRO_PIE_PATH, TEST_FACT};
 
+use crate::constants::{CAIRO_PIE_PATH, TEST_FACT};
+
 mod constants;
 
 #[rstest]
