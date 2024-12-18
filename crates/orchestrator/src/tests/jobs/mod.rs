@@ -18,9 +18,8 @@ use crate::jobs::types::{ExternalId, JobItem, JobStatus, JobType, JobVerificatio
 use crate::jobs::{
     create_job, handle_job_failure, increment_key_in_metadata, process_job, verify_job, Job, JobError, MockJob,
 };
-use crate::queue::job_queue::{
-    QueueNameForJobType, DATA_SUBMISSION_JOB_PROCESSING_QUEUE, DATA_SUBMISSION_JOB_VERIFICATION_QUEUE,
-};
+use crate::queue::job_queue::QueueNameForJobType;
+use crate::queue::QueueType;
 use crate::tests::common::MessagePayloadType;
 use crate::tests::config::{ConfigType, TestConfigBuilder};
 
@@ -98,9 +97,10 @@ async fn create_job_job_exists_in_db_works() {
     let database_client = services.config.database();
     database_client.create_job(job_item.clone()).await.unwrap();
 
-    assert!(
-        create_job(JobType::ProofCreation, "0".to_string(), HashMap::new(), services.config.clone()).await.is_err()
-    );
+    assert!(create_job(JobType::ProofCreation, "0".to_string(), HashMap::new(), services.config.clone()).await.is_ok());
+    // There should be only 1 job in the db
+    let jobs_in_db = database_client.get_jobs_by_statuses(vec![JobStatus::Created], None).await.unwrap();
+    assert_eq!(jobs_in_db.len(), 1);
 
     // Waiting for 5 secs for message to be passed into the queue
     sleep(Duration::from_secs(5)).await;
@@ -189,6 +189,53 @@ async fn process_job_with_job_exists_in_db_and_valid_job_processing_status_works
         services.config.queue().consume_message_from_queue(job_type.verify_queue_name()).await.unwrap();
     let consumed_message_payload: MessagePayloadType = consumed_messages.payload_serde_json().unwrap().unwrap();
     assert_eq!(consumed_message_payload.id, job_item.id);
+}
+
+/// Tests `process_job` function when job handler panics during execution.
+/// This test verifies that:
+/// 1. The panic is properly caught and handled
+/// 2. The job is moved to failed state
+/// 3. Appropriate error message is set in the job metadata
+#[rstest]
+#[tokio::test]
+async fn process_job_handles_panic() {
+    let job_item = build_job_item_by_type_and_status(JobType::SnosRun, JobStatus::Created, "1".to_string());
+
+    // Building config
+    let services = TestConfigBuilder::new()
+        .configure_database(ConfigType::Actual)
+        .configure_queue_client(ConfigType::Actual)
+        .build()
+        .await;
+
+    let database_client = services.config.database();
+    // Creating job in database
+    database_client.create_job(job_item.clone()).await.unwrap();
+
+    let mut job_handler = MockJob::new();
+    // Setting up mock to panic when process_job is called
+    job_handler
+        .expect_process_job()
+        .times(1)
+        .returning(|_, _| -> Result<String, JobError> { panic!("Simulated panic in process_job") });
+
+    // Mocking the `get_job_handler` call in process_job function
+    let job_handler: Arc<Box<dyn Job>> = Arc::new(Box::new(job_handler));
+    let ctx = mock_factory::get_job_handler_context();
+    ctx.expect().times(1).with(eq(JobType::SnosRun)).return_once(move |_| Arc::clone(&job_handler));
+
+    assert!(process_job(job_item.id, services.config.clone()).await.is_ok());
+
+    // DB checks - verify the job was moved to failed state
+    let job_in_db = database_client.get_job_by_id(job_item.id).await.unwrap().unwrap();
+    assert_eq!(job_in_db.status, JobStatus::Failed);
+    assert!(
+        job_in_db
+            .metadata
+            .get(JOB_METADATA_FAILURE_REASON)
+            .unwrap()
+            .contains("Job handler panicked with message: Simulated panic in process_job")
+    );
 }
 
 /// Tests `process_job` function when job is already existing in the db and job status is not
@@ -382,19 +429,11 @@ async fn verify_job_with_verified_status_works() {
     sleep(Duration::from_secs(5)).await;
 
     // Queue checks.
-    let consumed_messages_verification_queue = services
-        .config
-        .queue()
-        .consume_message_from_queue(DATA_SUBMISSION_JOB_VERIFICATION_QUEUE.to_string())
-        .await
-        .unwrap_err();
+    let consumed_messages_verification_queue =
+        services.config.queue().consume_message_from_queue(QueueType::DataSubmissionJobVerification).await.unwrap_err();
     assert_matches!(consumed_messages_verification_queue, QueueError::NoData);
-    let consumed_messages_processing_queue = services
-        .config
-        .queue()
-        .consume_message_from_queue(DATA_SUBMISSION_JOB_PROCESSING_QUEUE.to_string())
-        .await
-        .unwrap_err();
+    let consumed_messages_processing_queue =
+        services.config.queue().consume_message_from_queue(QueueType::DataSubmissionJobProcessing).await.unwrap_err();
     assert_matches!(consumed_messages_processing_queue, QueueError::NoData);
 }
 
@@ -436,12 +475,8 @@ async fn verify_job_with_rejected_status_adds_to_queue_works() {
     sleep(Duration::from_secs(5)).await;
 
     // Queue checks.
-    let consumed_messages = services
-        .config
-        .queue()
-        .consume_message_from_queue(DATA_SUBMISSION_JOB_PROCESSING_QUEUE.to_string())
-        .await
-        .unwrap();
+    let consumed_messages =
+        services.config.queue().consume_message_from_queue(QueueType::DataSubmissionJobProcessing).await.unwrap();
     let consumed_message_payload: MessagePayloadType = consumed_messages.payload_serde_json().unwrap().unwrap();
     assert_eq!(consumed_message_payload.id, job_item.id);
 }

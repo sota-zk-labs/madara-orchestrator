@@ -7,11 +7,6 @@ use thiserror::Error;
 use crate::config::Config;
 use crate::jobs::types::JobStatus;
 
-use async_trait::async_trait;
-
-use crate::config::config;
-use crate::jobs::types::JobStatus;
-
 pub mod data_submission_worker;
 pub mod proof_registration;
 pub mod proving;
@@ -54,7 +49,7 @@ pub trait Worker: Send + Sync {
     async fn is_worker_enabled(&self, config: Arc<Config>) -> color_eyre::Result<bool> {
         let failed_jobs = config
             .database()
-            .get_jobs_by_statuses(vec![JobStatus::VerificationFailed, JobStatus::VerificationTimeout], Some(1))
+            .get_jobs_by_statuses(vec![JobStatus::Failed, JobStatus::VerificationTimeout], Some(1))
             .await?;
 
         if !failed_jobs.is_empty() {

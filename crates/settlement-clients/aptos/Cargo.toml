@@ -21,6 +21,3 @@ once_cell = { workspace = true }
 settlement-client-interface = { workspace = true }
 tokio = { workspace = true }
 utils = { workspace = true }
-
-[dev-dependencies]
-test-log = { workspace = true }

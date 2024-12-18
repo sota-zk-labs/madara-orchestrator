@@ -7,10 +7,12 @@ use color_eyre::eyre::Context;
 use color_eyre::Result as EyreResult;
 use omniqueue::{Delivery, QueueError};
 use serde::{Deserialize, Deserializer, Serialize};
+use strum::Display;
 use thiserror::Error;
 use tokio::time::sleep;
 use uuid::Uuid;
 
+use super::QueueType;
 use crate::config::Config;
 use crate::jobs::types::JobType;
 use crate::jobs::{handle_job_failure, process_job, verify_job, JobError, OtherError};
@@ -20,28 +22,6 @@ use crate::workers::proving::ProvingWorker;
 use crate::workers::snos::SnosWorker;
 use crate::workers::update_state::UpdateStateWorker;
 use crate::workers::Worker;
-
-pub const SNOS_JOB_PROCESSING_QUEUE: &str = "madara_orchestrator_snos_job_processing_queue";
-pub const SNOS_JOB_VERIFICATION_QUEUE: &str = "madara_orchestrator_snos_job_verification_queue";
-
-pub const PROVING_JOB_PROCESSING_QUEUE: &str = "madara_orchestrator_proving_job_processing_queue";
-pub const PROVING_JOB_VERIFICATION_QUEUE: &str = "madara_orchestrator_proving_job_verification_queue";
-
-pub const PROOF_REGISTRATION_JOB_PROCESSING_QUEUE: &str = "madara_orchestrator_proof_registration_job_processing_queue";
-pub const PROOF_REGISTRATION_JOB_VERIFICATION_QUEUE: &str =
-    "madara_orchestrator_proof_registration_job_verification_queue";
-
-pub const DATA_SUBMISSION_JOB_PROCESSING_QUEUE: &str = "madara_orchestrator_data_submission_job_processing_queue";
-pub const DATA_SUBMISSION_JOB_VERIFICATION_QUEUE: &str = "madara_orchestrator_data_submission_job_verification_queue";
-
-pub const UPDATE_STATE_JOB_PROCESSING_QUEUE: &str = "madara_orchestrator_update_state_job_processing_queue";
-pub const UPDATE_STATE_JOB_VERIFICATION_QUEUE: &str = "madara_orchestrator_update_state_job_verification_queue";
-
-// Below is the Dead Letter Queue for the above queues.
-pub const JOB_HANDLE_FAILURE_QUEUE: &str = "madara_orchestrator_job_handle_failure_queue";
-
-// Queues for SNOS worker trigger listening
-pub const WORKER_TRIGGER_QUEUE: &str = "madara_orchestrator_worker_trigger_queue";
 
 #[derive(Error, Debug, PartialEq)]
 pub enum ConsumptionError {
@@ -63,7 +43,8 @@ pub struct JobQueueMessage {
     pub id: Uuid,
 }
 
-#[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Clone, Display)]
+#[strum(serialize_all = "PascalCase")]
 pub enum WorkerTriggerType {
     Snos,
     Proving,
@@ -101,13 +82,14 @@ impl<'de> Deserialize<'de> for WorkerTriggerMessage {
     where
         D: Deserializer<'de>,
     {
-        let s = String::deserialize(deserializer)?;
-        let s = s.trim_start_matches('{').trim_end_matches('}');
-        let parts: Vec<&str> = s.split(':').collect();
-        if parts.len() != 2 || parts[0] != "worker" {
-            return Err(serde::de::Error::custom("Invalid format"));
+        #[derive(Deserialize, Debug)]
+        struct Helper {
+            worker: String,
         }
-        Ok(WorkerTriggerMessage { worker: WorkerTriggerType::from_str(parts[1]).map_err(serde::de::Error::custom)? })
+        let helper = Helper::deserialize(deserializer)?;
+        Ok(WorkerTriggerMessage {
+            worker: WorkerTriggerType::from_str(&helper.worker).map_err(serde::de::Error::custom)?,
+        })
     }
 }
 
@@ -118,30 +100,28 @@ enum DeliveryReturnType {
 }
 
 pub trait QueueNameForJobType {
-    fn process_queue_name(&self) -> String;
-    fn verify_queue_name(&self) -> String;
+    fn process_queue_name(&self) -> QueueType;
+    fn verify_queue_name(&self) -> QueueType;
 }
 
 impl QueueNameForJobType for JobType {
-    fn process_queue_name(&self) -> String {
+    fn process_queue_name(&self) -> QueueType {
         match self {
-            JobType::SnosRun => SNOS_JOB_PROCESSING_QUEUE,
-            JobType::ProofCreation => PROVING_JOB_PROCESSING_QUEUE,
-            JobType::ProofRegistration => PROOF_REGISTRATION_JOB_PROCESSING_QUEUE,
-            JobType::DataSubmission => DATA_SUBMISSION_JOB_PROCESSING_QUEUE,
-            JobType::StateTransition => UPDATE_STATE_JOB_PROCESSING_QUEUE,
+            JobType::SnosRun => QueueType::SnosJobProcessing,
+            JobType::ProofCreation => QueueType::ProvingJobProcessing,
+            JobType::ProofRegistration => QueueType::ProofRegistrationJobProcessing,
+            JobType::DataSubmission => QueueType::DataSubmissionJobProcessing,
+            JobType::StateTransition => QueueType::UpdateStateJobProcessing,
         }
-        .to_string()
     }
-    fn verify_queue_name(&self) -> String {
+    fn verify_queue_name(&self) -> QueueType {
         match self {
-            JobType::SnosRun => SNOS_JOB_VERIFICATION_QUEUE,
-            JobType::ProofCreation => PROVING_JOB_VERIFICATION_QUEUE,
-            JobType::ProofRegistration => PROOF_REGISTRATION_JOB_VERIFICATION_QUEUE,
-            JobType::DataSubmission => DATA_SUBMISSION_JOB_VERIFICATION_QUEUE,
-            JobType::StateTransition => UPDATE_STATE_JOB_VERIFICATION_QUEUE,
+            JobType::SnosRun => QueueType::SnosJobVerification,
+            JobType::ProofCreation => QueueType::ProvingJobVerification,
+            JobType::ProofRegistration => QueueType::ProofRegistrationJobVerification,
+            JobType::DataSubmission => QueueType::DataSubmissionJobVerification,
+            JobType::StateTransition => QueueType::UpdateStateJobVerification,
         }
-        .to_string()
     }
 }
 
@@ -161,7 +141,7 @@ pub async fn add_job_to_verification_queue(
 }
 
 pub async fn consume_job_from_queue<F, Fut>(
-    queue: String,
+    queue: QueueType,
     handler: F,
     config: Arc<Config>,
 ) -> Result<(), ConsumptionError>
@@ -172,7 +152,7 @@ where
 {
     tracing::trace!(queue = %queue, "Attempting to consume job from queue");
 
-    let delivery = get_delivery_from_queue(&queue, config.clone()).await?;
+    let delivery = get_delivery_from_queue(queue.clone(), config.clone()).await?;
 
     let message = match delivery {
         DeliveryReturnType::Message(message) => {
@@ -206,7 +186,7 @@ where
 /// Function to consume the message from the worker trigger queues and spawn the worker
 /// for respective message received.
 pub async fn consume_worker_trigger_messages_from_queue<F, Fut>(
-    queue: String,
+    queue: QueueType,
     handler: F,
     config: Arc<Config>,
 ) -> Result<(), ConsumptionError>
@@ -216,7 +196,7 @@ where
     Fut: Future<Output = color_eyre::Result<()>> + Send,
 {
     tracing::debug!("Consuming from queue {:?}", queue);
-    let delivery = get_delivery_from_queue(&queue, config.clone()).await?;
+    let delivery = get_delivery_from_queue(queue, Arc::clone(&config)).await?;
 
     let message = match delivery {
         DeliveryReturnType::Message(message) => message,
@@ -244,11 +224,15 @@ fn parse_job_message(message: &Delivery) -> Result<Option<JobQueueMessage>, Cons
         .map_err(|e| ConsumptionError::Other(OtherError::from(e)))
 }
 
+/// Using string since localstack currently is instable with deserializing maps.
+/// Change this to accept a map after localstack is stable
 fn parse_worker_message(message: &Delivery) -> Result<Option<WorkerTriggerMessage>, ConsumptionError> {
-    message
-        .payload_serde_json()
-        .wrap_err("Payload Serde Error")
-        .map_err(|e| ConsumptionError::Other(OtherError::from(e)))
+    let payload = message
+        .borrow_payload()
+        .ok_or_else(|| ConsumptionError::Other(OtherError::from("Empty payload".to_string())))?;
+    let message_string = String::from_utf8_lossy(payload).to_string().trim_matches('\"').to_string();
+    let trigger_type = WorkerTriggerType::from_str(message_string.as_str()).expect("trigger type unwrapping failed");
+    Ok(Some(WorkerTriggerMessage { worker: trigger_type }))
 }
 
 async fn handle_job_message<F, Fut>(
@@ -281,7 +265,8 @@ where
                 .await
                 .map_err(|e| ConsumptionError::Other(OtherError::from(e)))?;
 
-            match message.nack().await {
+            // not using `nack` as we dont' want retries in case of failures
+            match message.ack().await {
                 Ok(_) => Err(ConsumptionError::FailedToHandleJob {
                     job_id: job_message.id,
                     error_msg: "Job handling failed, message nack-ed".to_string(),
@@ -325,7 +310,8 @@ where
                 .await
                 .map_err(|e| ConsumptionError::Other(OtherError::from(e)))?;
 
-            message.nack().await.map_err(|(e, _)| ConsumptionError::Other(OtherError::from(e.to_string())))?;
+            // not using `nack` as we dont' want retries in case of failures
+            message.ack().await.map_err(|(e, _)| ConsumptionError::Other(OtherError::from(e.to_string())))?;
             Err(ConsumptionError::FailedToSpawnWorker {
                 worker_trigger_type: job_message.worker,
                 error_msg: "Worker handling failed, message nack-ed".to_string(),
@@ -346,8 +332,11 @@ fn get_worker_handler_from_worker_trigger_type(worker_trigger_type: WorkerTrigge
 }
 
 /// To get the delivery from the message queue using the queue name
-async fn get_delivery_from_queue(queue: &str, config: Arc<Config>) -> Result<DeliveryReturnType, ConsumptionError> {
-    match config.queue().consume_message_from_queue(queue.to_string()).await {
+async fn get_delivery_from_queue(
+    queue: QueueType,
+    config: Arc<Config>,
+) -> Result<DeliveryReturnType, ConsumptionError> {
+    match config.queue().consume_message_from_queue(queue).await {
         Ok(d) => Ok(DeliveryReturnType::Message(d)),
         Err(QueueError::NoData) => Ok(DeliveryReturnType::NoMessage),
         Err(e) => Err(ConsumptionError::FailedToConsumeFromQueue { error_msg: e.to_string() }),
@@ -355,7 +344,8 @@ async fn get_delivery_from_queue(queue: &str, config: Arc<Config>) -> Result<Del
 }
 
 macro_rules! spawn_consumer {
-    ($queue_type :expr, $handler : expr, $consume_function: expr) => {
+    ($queue_type:expr, $handler:expr, $consume_function:expr, $config:expr) => {
+        let config_clone = $config.clone();
         tokio::spawn(async move {
             loop {
                 match $consume_function($queue_type, $handler, config_clone.clone()).await {
@@ -369,36 +359,21 @@ macro_rules! spawn_consumer {
 }
 
 pub async fn init_consumers(config: Arc<Config>) -> Result<(), JobError> {
-    spawn_consumer!(SNOS_JOB_PROCESSING_QUEUE.to_string(), process_job, consume_job_from_queue, config.clone());
-    spawn_consumer!(SNOS_JOB_VERIFICATION_QUEUE.to_string(), verify_job, consume_job_from_queue, config.clone());
+    spawn_consumer!(QueueType::SnosJobProcessing, process_job, consume_job_from_queue, config.clone());
+    spawn_consumer!(QueueType::SnosJobVerification, verify_job, consume_job_from_queue, config.clone());
 
-    spawn_consumer!(PROVING_JOB_PROCESSING_QUEUE.to_string(), process_job, consume_job_from_queue, config.clone());
-    spawn_consumer!(PROVING_JOB_VERIFICATION_QUEUE.to_string(), verify_job, consume_job_from_queue, config.clone());
+    spawn_consumer!(QueueType::ProvingJobProcessing, process_job, consume_job_from_queue, config.clone());
+    spawn_consumer!(QueueType::ProvingJobVerification, verify_job, consume_job_from_queue, config.clone());
 
-    spawn_consumer!(
-        DATA_SUBMISSION_JOB_PROCESSING_QUEUE.to_string(),
-        process_job,
-        consume_job_from_queue,
-        config.clone()
-    );
-    spawn_consumer!(
-        DATA_SUBMISSION_JOB_VERIFICATION_QUEUE.to_string(),
-        verify_job,
-        consume_job_from_queue,
-        config.clone()
-    );
+    spawn_consumer!(QueueType::DataSubmissionJobProcessing, process_job, consume_job_from_queue, config.clone());
+    spawn_consumer!(QueueType::DataSubmissionJobVerification, verify_job, consume_job_from_queue, config.clone());
 
-    spawn_consumer!(UPDATE_STATE_JOB_PROCESSING_QUEUE.to_string(), process_job, consume_job_from_queue, config.clone());
-    spawn_consumer!(
-        UPDATE_STATE_JOB_VERIFICATION_QUEUE.to_string(),
-        verify_job,
-        consume_job_from_queue,
-        config.clone()
-    );
+    spawn_consumer!(QueueType::UpdateStateJobProcessing, process_job, consume_job_from_queue, config.clone());
+    spawn_consumer!(QueueType::UpdateStateJobVerification, verify_job, consume_job_from_queue, config.clone());
 
-    spawn_consumer!(JOB_HANDLE_FAILURE_QUEUE.to_string(), handle_job_failure, consume_job_from_queue, config.clone());
+    spawn_consumer!(QueueType::JobHandleFailure, handle_job_failure, consume_job_from_queue, config.clone());
 
-    spawn_consumer!(WORKER_TRIGGER_QUEUE.to_string(), spawn_worker, consume_worker_trigger_messages_from_queue, config);
+    spawn_consumer!(QueueType::WorkerTrigger, spawn_worker, consume_worker_trigger_messages_from_queue, config);
     Ok(())
 }
 
@@ -410,7 +385,7 @@ async fn spawn_worker(worker: Box<dyn Worker>, config: Arc<Config>) -> color_eyr
     }
     Ok(())
 }
-async fn add_job_to_queue(id: Uuid, queue: String, delay: Option<Duration>, config: Arc<Config>) -> EyreResult<()> {
+async fn add_job_to_queue(id: Uuid, queue: QueueType, delay: Option<Duration>, config: Arc<Config>) -> EyreResult<()> {
     let message = JobQueueMessage { id };
     config.queue().send_message_to_queue(queue.clone(), serde_json::to_string(&message)?, delay).await?;
     tracing::info!(

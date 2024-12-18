@@ -111,37 +111,26 @@ jobs:
           mv target/debug/madara ../madara-binary
           cd ..
           echo -e "
-          MADARA_BINARY_PATH=\"$(pwd)/madara-binary\"" >> .env.test
+          MADARA_ORCHESTRATOR_MADARA_BINARY_PATH=\"$(pwd)/madara-binary\"" >> .env.test
           cat .env.test
 
       - name: Getting neccesary files for testing
         run: |
-          wget -P ./crates/prover-services/sharp-service/tests/artifacts https://madara-orchestrator-sharp-pie.s3.amazonaws.com/238996-SN.zip
+          wget -P ./crates/prover-clients/sharp-service/tests/artifacts https://madara-orchestrator-sharp-pie.s3.amazonaws.com/238996-SN.zip
           # TODO: this can be optimised
-          cp ./crates/prover-services/sharp-service/tests/artifacts/238996-SN.zip ./crates/orchestrator/src/tests/artifacts/238996-SN.zip
+          cp ./crates/prover-clients/sharp-service/tests/artifacts/238996-SN.zip ./crates/orchestrator/src/tests/artifacts/238996-SN.zip
 
       - name: Build SNOS files
         run: |
-          # Downloading all the deps
-          cargo fetch
-          # Navigate to checkouts folder
-          cd /home/runner/.cargo/git/checkouts
-          # Navigating to snos
-          cd snos-59fe8329bb16fe65
-          # Navigating to the build
-          cd af74c75
-          # Activating the venv
-          source ~/cairo_venv/bin/activate
-          # Building the cairo lang repo requirements
-          ./scripts/setup-tests.sh
+          make snos
 
       - name: Check rust version
         run: rustup show
 
       - name: Run llvm-cov tests
         env:
-          SETTLEMENT_RPC_URL: ${{ secrets.ETHEREUM_SEPOLIA_BLAST_RPC }}
-          RPC_FOR_SNOS: ${{ secrets.RPC_FOR_SNOS }}
+          MADARA_ORCHESTRATOR_ETHEREUM_SETTLEMENT_RPC_URL: ${{ secrets.ETHEREUM_SEPOLIA_BLAST_RPC }}
+          MADARA_ORCHESTRATOR_RPC_FOR_SNOS: ${{ secrets.RPC_FOR_SNOS }}
           # the self hosted runner has a different region so we override it here
           AWS_REGION: us-east-1
         run: RUST_LOG=debug RUST_BACKTRACE=1 cargo llvm-cov nextest --release --features testing --lcov --output-path lcov.info --test-threads=1 --workspace --exclude=e2e-tests --no-fail-fast
