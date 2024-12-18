@@ -12,7 +12,8 @@ jobs:
 
     services:
       localstack:
-        image: localstack/localstack
+        image: localstack/localstack@sha256:763947722c6c8d33d5fbf7e8d52b4bddec5be35274a0998fdc6176d733375314
+
         env:
           DEFAULT_REGION: us-east-1
           AWS_ACCESS_KEY_ID: "AWS_ACCESS_KEY_ID"
@@ -71,7 +72,7 @@ jobs:
           then
               echo "Anvil is installed. Version information:"
               anvil --version
-              anvil --block-time 6 &
+              anvil --block-time 1 &
           else
               echo "Anvil is not installed or not in PATH"
               exit 1
@@ -79,23 +80,12 @@ jobs:
 
       - name: Build SNOS files
         run: |
-          # Downloading all the deps
-          cargo fetch
-          # Navigate to checkouts folder
-          cd /home/runner/.cargo/git/checkouts
-          # Navigating to snos
-          cd snos-59fe8329bb16fe65
-          # Navigating to the build
-          cd af74c75
-          # Activating the venv
-          source ~/cairo_venv/bin/activate
-          # Building the cairo lang repo requirements
-          ./scripts/setup-tests.sh
+          make snos
 
       - name: Run e2e test
         env:
-          SETTLEMENT_RPC_URL: ${{ secrets.ETHEREUM_SEPOLIA_BLAST_RPC }}
-          RPC_FOR_SNOS: ${{ secrets.RPC_FOR_SNOS }}
+          MADARA_ORCHESTRATOR_ETHEREUM_SETTLEMENT_RPC_URL: ${{ secrets.ETHEREUM_SEPOLIA_BLAST_RPC }}
+          MADARA_ORCHESTRATOR_RPC_FOR_SNOS: ${{ secrets.RPC_FOR_SNOS }}
           # the self hosted runner has a different region so we override it here
           AWS_REGION: us-east-1
         run: |

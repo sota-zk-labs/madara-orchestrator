@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## Added
 
+- tests: http_client tests added
+- Added Atlantic proving service integration
+- setup functions added for cloud and db
+- Added cli args support for all the services
+- Setup functions added for cloud and db
+- panic handling in process job
+- upgrade ETH L1 bridge for withdrawals to work
+- added makefile and submodules
+- Endpoints for triggering processing and verification jobs
 - Add multiple queues for processing and verification based on job type
 - added logs
 - added MongoDB migrations using nodejs
@@ -40,6 +49,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## Changed
 
+- refactor: Readme and .env.example
+- refactor: http_mock version updated
+- refactor: prover-services renamed to prover-clients
+- refactor: update json made generic to update any json file
+- refactor: makefile updated as per bootstraper changes
+- removed error return in case of JobAlreadyExists in `create_job` function
 - update_job returns the updated job item
 - made create_job atomic to avoid race conditions
 - handle jobs in tokio tasks
@@ -60,12 +75,25 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## Removed
 
+- docker-compose removed
 - revert CI changes from settlement client PR.
 - `init_config` from all the tests.
 - `fetch_from_test` argument
 
 ## Fixed
 
+- refactor: instrumentations
+- `is_worker_enabled` status check moved from `VerificationFailed` to `Failed`
+- refactor: static attributes for telemetry
+- refactor: aws setup for Event Bridge
+- refactor: RUST_LOG filtering support
+- refactor: cargo.toml files cleaned
+- blob data formation process from state update
+- OTEL config refactor
+- indexing for get_jobs_without_successor
+- wait for transaction logic in ethereum settlement client
+- y_0 point evaluation in build kzg proof for ethereum settlement
+- fixed metrics name, signoz dashboard.
 - fixes logs based on RUST_LOG
 - fixes after sepolia testing
 - all failed jobs should move to failed state

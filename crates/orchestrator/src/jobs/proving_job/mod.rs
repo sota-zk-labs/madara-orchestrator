@@ -71,17 +71,16 @@ impl Job for ProvingJob {
             tracing::error!(job_id = %job.internal_id, error = %e, "Failed to fetch Cairo PIE file");
             ProvingError::CairoPIEFileFetchFailed(e.to_string())
         })?;
-
         tracing::debug!(job_id = %job.internal_id, "Parsing Cairo PIE file");
-        let cairo_pie = CairoPie::from_bytes(cairo_pie_file.to_vec().as_slice()).map_err(|e| {
+        let cairo_pie = Box::new(CairoPie::from_bytes(cairo_pie_file.to_vec().as_slice()).map_err(|e| {
             tracing::error!(job_id = %job.internal_id, error = %e, "Failed to parse Cairo PIE file");
             ProvingError::CairoPIENotReadable(e.to_string())
-        })?;
+        })?);
 
         tracing::debug!(job_id = %job.internal_id, "Submitting task to prover client");
         let external_id = config
             .prover_client()
-            .submit_task(Task::CairoPie(cairo_pie))
+            .submit_task(Task::CairoPie(cairo_pie), *config.prover_layout_name())
             .await
             .wrap_err("Prover Client Error".to_string())
             .map_err(|e| {
@@ -129,6 +128,9 @@ impl Job for ProvingJob {
                 Ok(JobVerificationStatus::Pending)
             }
             TaskStatus::Succeeded => {
+                // TODO: call isValid on the contract over here to cross-verify whether the proof was registered on
+                // chain or not
+
                 tracing::info!(log_type = "completed", category = "proving", function_type = "verify_job", job_id = ?job.id,  block_no = %internal_id,     "Proving job verification completed.");
                 Ok(JobVerificationStatus::Verified)
             }
@@ -143,14 +145,14 @@ impl Job for ProvingJob {
     }
 
     fn max_process_attempts(&self) -> u64 {
-        1
+        2
     }
 
     fn max_verification_attempts(&self) -> u64 {
-        1
+        1200
     }
 
     fn verification_polling_delay_seconds(&self) -> u64 {
-        60
+        30
     }
 }

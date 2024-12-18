@@ -1,13 +1,16 @@
 use std::collections::HashMap;
 use std::fmt;
+use std::panic::AssertUnwindSafe;
 use std::sync::Arc;
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 use async_trait::async_trait;
+use chrono::Utc;
 use color_eyre::eyre::{eyre, Context};
-use constants::JOB_METADATA_FAILURE_REASON;
+use constants::{JOB_METADATA_ERROR, JOB_METADATA_FAILURE_REASON, JOB_METADATA_PROCESSING_COMPLETED_AT};
 use conversion::parse_string;
 use da_job::DaError;
+use futures::FutureExt;
 use mockall::automock;
 use mockall_double::double;
 use opentelemetry::KeyValue;
@@ -39,6 +42,9 @@ use thiserror::Error;
 
 #[derive(Error, Debug, PartialEq)]
 pub enum JobError {
+    #[error("Job id {id:?} is invalid.")]
+    InvalidId { id: String },
+
     #[error("Job already exists for internal_id {internal_id:?} and job_type {job_type:?}. Skipping!")]
     JobAlreadyExists { internal_id: String, job_type: JobType },
 
@@ -146,6 +152,7 @@ pub async fn create_job(
     metadata: HashMap<String, String>,
     config: Arc<Config>,
 ) -> Result<(), JobError> {
+    let start = Instant::now();
     tracing::info!(log_type = "starting", category = "general", function_type = "create_job", job_type = ?job_type, block_no = %internal_id, "General create job started for block");
 
     tracing::debug!(
@@ -160,9 +167,10 @@ pub async fn create_job(
         .await
         .map_err(|e| JobError::Other(OtherError(e)))?;
 
-    // this is technicaly a redundant check, we've another check inside `create_job`
+    // this is technically a redundant check, we've another check inside `create_job`
     if existing_job.is_some() {
-        return Err(JobError::JobAlreadyExists { internal_id, job_type });
+        tracing::warn!("{}", JobError::JobAlreadyExists { internal_id, job_type });
+        return Ok(());
     }
 
     let job_handler = factory::get_job_handler(&job_type).await;
@@ -173,14 +181,14 @@ pub async fn create_job(
         .await
         .map_err(|e| JobError::Other(OtherError(e)))?;
 
-    let attributes = [
-        KeyValue::new("job_type", format!("{:?}", job_type)),
-        KeyValue::new("type", "create_job"),
-        KeyValue::new("job", format!("{:?}", job_item)),
-    ];
+    let attributes =
+        [KeyValue::new("operation_job_type", format!("{:?}", job_type)), KeyValue::new("operation_type", "create_job")];
 
-    ORCHESTRATOR_METRICS.block_gauge.record(parse_string(&internal_id)?, &attributes);
     tracing::info!(log_type = "completed", category = "general", function_type = "create_job", block_no = %internal_id, "General create job completed for block");
+    let duration = start.elapsed();
+    ORCHESTRATOR_METRICS.block_gauge.record(parse_string(&internal_id)?, &attributes);
+    ORCHESTRATOR_METRICS.successful_job_operations.add(1.0, &attributes);
+    ORCHESTRATOR_METRICS.jobs_response_time.record(duration.as_secs_f64(), &attributes);
     Ok(())
 }
 
@@ -188,12 +196,13 @@ pub async fn create_job(
 /// DB. It then adds the job to the verification queue.
 #[tracing::instrument(skip(config), fields(category = "general", job, job_type, internal_id), ret, err)]
 pub async fn process_job(id: Uuid, config: Arc<Config>) -> Result<(), JobError> {
+    let start = Instant::now();
     let job = get_job(id, config.clone()).await?;
     let internal_id = job.internal_id.clone();
     tracing::info!(log_type = "starting", category = "general", function_type = "process_job", block_no = %internal_id, "General process job started for block");
 
     tracing::Span::current().record("job", format!("{:?}", job.clone()));
-    tracing::Span::current().record("job_type", format!("{:?}", job.job_type.clone()));
+    tracing::Span::current().record("job_type", format!("{:?}", job.job_type));
     tracing::Span::current().record("internal_id", job.internal_id.clone());
 
     tracing::debug!(job_id = ?id, status = ?job.status, "Current job status");
@@ -223,17 +232,35 @@ pub async fn process_job(id: Uuid, config: Arc<Config>) -> Result<(), JobError> 
 
     tracing::debug!(job_id = ?id, job_type = ?job.job_type, "Getting job handler");
     let job_handler = factory::get_job_handler(&job.job_type).await;
-    let external_id = match job_handler.process_job(config.clone(), &mut job).await {
-        Ok(external_id) => {
+    let external_id = match AssertUnwindSafe(job_handler.process_job(config.clone(), &mut job)).catch_unwind().await {
+        Ok(Ok(external_id)) => {
             tracing::debug!(job_id = ?id, "Successfully processed job");
+            // Add the time of processing to the metadata.
+            job.metadata
+                .insert(JOB_METADATA_PROCESSING_COMPLETED_AT.to_string(), Utc::now().timestamp_millis().to_string());
             external_id
         }
-        Err(e) => {
+        Ok(Err(e)) => {
             // TODO: I think most of the times the errors will not be fixed automatically
             // if we just retry. But for some failures like DB issues, it might be possible
             // that retrying will work. So we can add a retry logic here to improve robustness.
             tracing::error!(job_id = ?id, error = ?e, "Failed to process job");
             return move_job_to_failed(&job, config.clone(), format!("Processing failed: {}", e)).await;
+        }
+        Err(panic) => {
+            let panic_msg = panic
+                .downcast_ref::<String>()
+                .map(|s| s.as_str())
+                .or_else(|| panic.downcast_ref::<&str>().copied())
+                .unwrap_or("Unknown panic message");
+
+            tracing::error!(job_id = ?id, panic_msg = %panic_msg, "Job handler panicked during processing");
+            return move_job_to_failed(
+                &job,
+                config.clone(),
+                format!("Job handler panicked with message: {}", panic_msg),
+            )
+            .await;
         }
     };
     tracing::debug!(job_id = ?id, "Incrementing process attempt count in metadata");
@@ -271,13 +298,15 @@ pub async fn process_job(id: Uuid, config: Arc<Config>) -> Result<(), JobError> 
     })?;
 
     let attributes = [
-        KeyValue::new("job_type", format!("{:?}", job.job_type)),
-        KeyValue::new("type", "process_job"),
-        KeyValue::new("job", format!("{:?}", job)),
+        KeyValue::new("operation_job_type", format!("{:?}", job.job_type)),
+        KeyValue::new("operation_type", "process_job"),
     ];
 
-    ORCHESTRATOR_METRICS.block_gauge.record(parse_string(&job.internal_id)?, &attributes);
     tracing::info!(log_type = "completed", category = "general", function_type = "process_job", block_no = %internal_id, "General process job completed for block");
+    let duration = start.elapsed();
+    ORCHESTRATOR_METRICS.successful_job_operations.add(1.0, &attributes);
+    ORCHESTRATOR_METRICS.block_gauge.record(parse_string(&job.internal_id)?, &attributes);
+    ORCHESTRATOR_METRICS.jobs_response_time.record(duration.as_secs_f64(), &attributes);
     Ok(())
 }
 
@@ -294,6 +323,7 @@ pub async fn process_job(id: Uuid, config: Arc<Config>) -> Result<(), JobError> 
     err
 )]
 pub async fn verify_job(id: Uuid, config: Arc<Config>) -> Result<(), JobError> {
+    let start = Instant::now();
     let mut job = get_job(id, config.clone()).await?;
     let internal_id = job.internal_id.clone();
     tracing::info!(log_type = "starting", category = "general", function_type = "verify_job", block_no = %internal_id, "General verify job started for block");
@@ -315,14 +345,36 @@ pub async fn verify_job(id: Uuid, config: Arc<Config>) -> Result<(), JobError> {
     let job_handler = factory::get_job_handler(&job.job_type).await;
     tracing::debug!(job_id = ?id, "Verifying job with handler");
     let verification_status = job_handler.verify_job(config.clone(), &mut job).await?;
-    tracing::Span::current().record("verification_status", format!("{:?}", verification_status.clone()));
+    tracing::Span::current().record("verification_status", format!("{:?}", &verification_status));
+
+    let attributes = [
+        KeyValue::new("operation_job_type", format!("{:?}", job.job_type)),
+        KeyValue::new("operation_type", "verify_job"),
+        KeyValue::new("operation_verification_status", format!("{:?}", &verification_status)),
+    ];
 
     match verification_status {
         JobVerificationStatus::Verified => {
             tracing::info!(job_id = ?id, "Job verified successfully");
+            match job
+                .metadata
+                .get(JOB_METADATA_PROCESSING_COMPLETED_AT)
+                .and_then(|time| time.parse::<i64>().ok())
+                .map(|start| Utc::now().timestamp_millis() - start)
+            {
+                Some(time_taken) => ORCHESTRATOR_METRICS
+                    .verification_time
+                    .record(time_taken as f64, &[KeyValue::new("operation_job_type", format!("{:?}", job.job_type))]),
+                None => tracing::warn!("Failed to calculate verification time: Invalid or missing processing time"),
+            }
+            let mut metadata = job.metadata.clone();
+            metadata.remove("processing_completed_at");
             config
                 .database()
-                .update_job(&job, JobItemUpdates::new().update_status(JobStatus::Completed).build())
+                .update_job(
+                    &job,
+                    JobItemUpdates::new().update_metadata(metadata).update_status(JobStatus::Completed).build(),
+                )
                 .await
                 .map_err(|e| {
                     tracing::error!(job_id = ?id, error = ?e, "Failed to update job status to Completed");
@@ -332,7 +384,7 @@ pub async fn verify_job(id: Uuid, config: Arc<Config>) -> Result<(), JobError> {
         JobVerificationStatus::Rejected(e) => {
             tracing::warn!(job_id = ?id, error = ?e, "Job verification rejected");
             let mut new_job = job.clone();
-            new_job.metadata.insert("error".to_string(), e);
+            new_job.metadata.insert(JOB_METADATA_ERROR.to_string(), e);
             new_job.status = JobStatus::VerificationFailed;
 
             let process_attempts = get_u64_from_metadata(&job.metadata, JOB_PROCESS_ATTEMPT_METADATA_KEY)
@@ -411,14 +463,11 @@ pub async fn verify_job(id: Uuid, config: Arc<Config>) -> Result<(), JobError> {
         }
     };
 
-    let attributes = [
-        KeyValue::new("job_type", format!("{:?}", job.job_type)),
-        KeyValue::new("type", "verify_job"),
-        KeyValue::new("job", format!("{:?}", job)),
-    ];
-
-    ORCHESTRATOR_METRICS.block_gauge.record(parse_string(&job.internal_id)?, &attributes);
     tracing::info!(log_type = "completed", category = "general", function_type = "verify_job", block_no = %internal_id, "General verify job completed for block");
+    let duration = start.elapsed();
+    ORCHESTRATOR_METRICS.successful_job_operations.add(1.0, &attributes);
+    ORCHESTRATOR_METRICS.jobs_response_time.record(duration.as_secs_f64(), &attributes);
+    ORCHESTRATOR_METRICS.block_gauge.record(parse_string(&job.internal_id)?, &attributes);
     Ok(())
 }
 
@@ -463,6 +512,9 @@ async fn move_job_to_failed(job: &JobItem, config: Arc<Config>, reason: String) 
     {
         Ok(_) => {
             tracing::info!(log_type = "completed", category = "general", function_type = "handle_job_failure", block_no = %internal_id, "General handle job failure completed for block");
+            ORCHESTRATOR_METRICS
+                .failed_jobs
+                .add(1.0, &[KeyValue::new("operation_job_type", format!("{:?}", job.job_type))]);
             Ok(())
         }
         Err(e) => {
