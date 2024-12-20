@@ -1279,9 +1279,9 @@ dependencies = [
 
 [[package]]
 name = "anyhow"
-version = "1.0.89"
+version = "1.0.94"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "86fdf8605db99b54d3cd748a44c6d04df638eb5dafb219b135d0149bd0db01f6"
+checksum = "c1fd03a028ef38ba2276dce7e33fcd6369c158a1bca17946c4b1b701891c1ff7"
 
 [[package]]
 name = "appchain-core-contract-client"
@@ -1554,10 +1554,8 @@ dependencies = [
  "c-kzg",
  "color-eyre",
  "da-client-interface",
- "dotenvy",
- "lazy_static",
+ "serde",
  "tokio",
- "utils",
 ]
 
 [[package]]
@@ -2044,20 +2042,17 @@ name = "aptos-settlement-client"
 version = "0.1.0"
 dependencies = [
  "alloy 0.2.1",
- "anyhow",
+ "alloy-primitives 0.7.7",
  "aptos-sdk",
- "aptos-testcontainer",
  "async-trait",
  "c-kzg",
  "color-eyre",
- "dotenvy",
- "hex",
  "lazy_static",
  "log",
  "mockall",
- "once_cell",
  "settlement-client-interface",
  "tokio",
+ "tracing",
  "utils",
 ]
 
@@ -10404,6 +10399,7 @@ dependencies = [
  "opentelemetry_sdk",
  "prove_block",
  "prover-client-interface",
+ "reqwest 0.12.7",
  "rstest 0.22.0",
  "serde",
  "serde_json",

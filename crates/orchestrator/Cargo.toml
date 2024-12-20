@@ -89,6 +89,7 @@ opentelemetry-otlp = { workspace = true, features = [
 opentelemetry-semantic-conventions = { workspace = true }
 opentelemetry-stdout = { workspace = true }
 opentelemetry_sdk = { workspace = true, features = ["rt-tokio", "logs"] }
+reqwest = { workspace = true }
 tracing = { workspace = true }
 tracing-core = { workspace = true, default-features = false }
 tracing-opentelemetry = { workspace = true }
@@ -103,6 +104,6 @@ with_sqs = ["omniqueue"]
 testing = []
 
 [dev-dependencies]
+httpmock = { workspace = true, features = ["remote"] }
 hyper = { workspace = true, features = ["full"] }
 rstest = { workspace = true }
-httpmock = { workspace = true, features = ["remote"] }

@@ -2,8 +2,8 @@ use std::sync::Arc;
 
 #[cfg(feature = "testing")]
 use alloy::providers::RootProvider;
+use aptos_da_client::AptosDaClient;
 use atlantic_service::AtlanticProverService;
-use aptos_da_client::config::AptosDaConfig;
 use aws_config::meta::region::RegionProviderChain;
 use aws_config::{Region, SdkConfig};
 use aws_credential_types::Credentials;
@@ -289,9 +289,7 @@ pub async fn build_da_client(da_params: &DaValidatedArgs) -> Box<dyn DaClient + 
         DaValidatedArgs::Ethereum(ethereum_da_params) => {
             Box::new(EthereumDaClient::new_with_args(ethereum_da_params).await)
         }
-        DaValidatedArgs::Aptos(aptos_da_params) => {
-            Box::new(AptosDaClient::new_with_args(aptos_da_params).await)
-        }
+        DaValidatedArgs::Aptos(aptos_da_params) => Box::new(AptosDaClient::new_with_args(aptos_da_params).await),
     }
 }
 

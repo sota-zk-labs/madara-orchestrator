@@ -27,6 +27,7 @@ authors = ["Apoorv Sadana <@apoorvsadana>"]
 
 [workspace.dependencies]
 num = { version = "0.4.1" }
+anyhow = { version = "1.0.94" }
 async-trait = { version = "0.1.77" }
 alloy = { version = "0.2.1", features = [
   "full",

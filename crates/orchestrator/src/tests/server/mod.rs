@@ -2,8 +2,8 @@ pub mod job_routes;
 use std::io::Read;
 
 use axum::http::StatusCode;
-use hyper::body::Buf;
-use hyper::{Body, Request};
+use bytes::Buf;
+use reqwest::Client;
 use rstest::*;
 
 use crate::queue::init_consumers;
@@ -17,15 +17,17 @@ async fn test_health_endpoint() {
     let services = TestConfigBuilder::new().configure_api_server(ConfigType::Actual).build().await;
 
     let addr = services.api_server_address.unwrap();
-    let client = hyper::Client::new();
+
+    let client = Client::new();
     let response = client
-        .request(Request::builder().uri(format!("http://{}/health", addr)).body(Body::empty()).unwrap())
+        .post(&format!("http://{}/health", addr))
+        .send()
         .await
-        .unwrap();
+        .expect("Failed to send POST request");
 
     assert_eq!(response.status().as_str(), StatusCode::OK.as_str());
 
-    let body = hyper::body::to_bytes(response.into_body()).await.unwrap();
+    let body = response.bytes().await.unwrap();
     let mut buf = String::new();
     let res = body.reader().read_to_string(&mut buf).unwrap();
     assert_eq!(res, 2);

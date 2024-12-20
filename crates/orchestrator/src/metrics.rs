@@ -1,7 +1,8 @@
 use once_cell;
 use once_cell::sync::Lazy;
+use opentelemetry::global::meter_with_scope;
 use opentelemetry::metrics::{Counter, Gauge};
-use opentelemetry::{global, KeyValue};
+use opentelemetry::{InstrumentationScope, KeyValue};
 use utils::metrics::lib::{register_counter_metric_instrument, register_gauge_metric_instrument, Metrics};
 use utils::register_metric;
 
@@ -21,13 +22,12 @@ impl Metrics for OrchestratorMetrics {
     fn register() -> Self {
         // Register meter
         let common_scope_attributes = vec![KeyValue::new("crate", "orchestrator")];
-        let orchestrator_meter = global::meter_with_version(
-            "crates.orchestrator.opentelemetry",
-            // TODO: Unsure of these settings, come back
-            Some("0.17"),
-            Some("https://opentelemetry.io/schemas/1.2.0"),
-            Some(common_scope_attributes.clone()),
-        );
+        let instrumentation_scope = InstrumentationScope::builder("crates.orchestrator.opentelemetry")
+            .with_version("0.17")
+            .with_schema_url("https://opentelemetry.io/schema/1.2.0")
+            .with_attributes(common_scope_attributes.clone())
+            .build();
+        let orchestrator_meter = meter_with_scope(instrumentation_scope);
 
         // Register all instruments
         let block_gauge = register_gauge_metric_instrument(

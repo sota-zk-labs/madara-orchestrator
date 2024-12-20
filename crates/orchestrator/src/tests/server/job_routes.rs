@@ -3,7 +3,6 @@ use std::net::SocketAddr;
 use std::sync::Arc;
 
 use chrono::{SubsecRound as _, Utc};
-use hyper::{Body, Request};
 use mockall::predicate::eq;
 use rstest::*;
 use starknet::providers::jsonrpc::HttpTransport;
@@ -11,6 +10,7 @@ use starknet::providers::JsonRpcClient;
 use url::Url;
 use utils::env_utils::get_env_var_or_panic;
 use uuid::Uuid;
+use reqwest::Client;
 
 use crate::config::Config;
 use crate::jobs::job_handler_factory::mock_factory;
@@ -62,13 +62,12 @@ async fn test_trigger_process_job(#[future] setup_trigger: (SocketAddr, Arc<Conf
     let ctx = mock_factory::get_job_handler_context();
     ctx.expect().times(1).with(eq(job_type)).returning(move |_| Arc::clone(&job_handler));
 
-    let client = hyper::Client::new();
+    let client = Client::new();
     let response = client
-        .request(
-            Request::builder().uri(format!("http://{}/jobs/{}/process", addr, job_id)).body(Body::empty()).unwrap(),
-        )
+        .post(&format!("http://{}/jobs/{}/process", addr, job_id))
+        .send()
         .await
-        .unwrap();
+        .expect("Failed to send POST request");
 
     // assertions
     if let Some(job_fetched) = config.database().get_job_by_id(job_id).await.unwrap() {
@@ -102,11 +101,12 @@ async fn test_trigger_verify_job(#[future] setup_trigger: (SocketAddr, Arc<Confi
     let ctx = mock_factory::get_job_handler_context();
     ctx.expect().times(1).with(eq(job_type)).returning(move |_| Arc::clone(&job_handler));
 
-    let client = hyper::Client::new();
+    let client = Client::new();
     let response = client
-        .request(Request::builder().uri(format!("http://{}/jobs/{}/verify", addr, job_id)).body(Body::empty()).unwrap())
+        .post(&format!("http://{}/jobs/{}/verify", addr, job_id))
+        .send()
         .await
-        .unwrap();
+        .expect("Failed to send POST request");
 
     // assertions
     if let Some(job_fetched) = config.database().get_job_by_id(job_id).await.unwrap() {

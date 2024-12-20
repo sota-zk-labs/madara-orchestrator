@@ -1,13 +1,12 @@
 use std::time::Duration;
 
-use opentelemetry::trace::TracerProvider;
+use opentelemetry::trace::TracerProvider as TracerProviderTrait;
 use opentelemetry::{global, KeyValue};
 use opentelemetry_appender_tracing::layer::OpenTelemetryTracingBridge;
-use opentelemetry_otlp::{ExportConfig, WithExportConfig};
+use opentelemetry_otlp::{ExportConfig, LogExporter, SpanExporter, WithExportConfig};
 use opentelemetry_sdk::logs::LoggerProvider;
-use opentelemetry_sdk::metrics::reader::{DefaultAggregationSelector, DefaultTemporalitySelector};
 use opentelemetry_sdk::metrics::{PeriodicReader, SdkMeterProvider};
-use opentelemetry_sdk::trace::{BatchConfigBuilder, Config, Tracer};
+use opentelemetry_sdk::trace::{Tracer, TracerProvider};
 use opentelemetry_sdk::{runtime, Resource};
 use tracing_opentelemetry::OpenTelemetryLayer;
 use tracing_subscriber::layer::SubscriberExt as _;
@@ -80,20 +79,16 @@ pub fn shutdown_analytics(meter_provider: Option<SdkMeterProvider>, instrumentat
 }
 
 pub fn init_tracer_provider(otel_config: &OTELConfig) -> Tracer {
-    let batch_config = BatchConfigBuilder::default()
-    // Increasing the queue size and batch size, only increase in queue size delays full channel error.
-    .build();
+    let exporter =
+        SpanExporter::builder().with_tonic().with_endpoint(otel_config.endpoint.to_string()).build().unwrap();
 
-    let provider = opentelemetry_otlp::new_pipeline()
-        .tracing()
-        .with_exporter(opentelemetry_otlp::new_exporter().tonic().with_endpoint(otel_config.endpoint.to_string()))
-        .with_trace_config(Config::default().with_resource(Resource::new(vec![KeyValue::new(
+    let provider = TracerProvider::builder()
+        .with_batch_exporter(exporter, runtime::Tokio)
+        .with_resource(Resource::new(vec![KeyValue::new(
             opentelemetry_semantic_conventions::resource::SERVICE_NAME,
             format!("{}{}", otel_config.service_name, "_trace_service"),
-        )])))
-        .with_batch_config(batch_config)
-        .install_batch(runtime::Tokio)
-        .expect("Failed to install tracer provider");
+        )]))
+        .build();
 
     global::set_tracer_provider(provider.clone());
 
@@ -101,15 +96,10 @@ pub fn init_tracer_provider(otel_config: &OTELConfig) -> Tracer {
 }
 
 pub fn init_metric_provider(otel_config: &OTELConfig) -> SdkMeterProvider {
-    let export_config = ExportConfig { endpoint: otel_config.endpoint.to_string(), ..ExportConfig::default() };
+    let export_config = ExportConfig { endpoint: Some(otel_config.endpoint.to_string()), ..ExportConfig::default() };
 
     // Creates and builds the OTLP exporter
-    let exporter = opentelemetry_otlp::new_exporter().tonic().with_export_config(export_config).build_metrics_exporter(
-        // TODO: highly likely that changing these configs will result in correct collection of traces, inhibiting full
-        // channel issue
-        Box::new(DefaultAggregationSelector::new()),
-        Box::new(DefaultTemporalitySelector::new()),
-    );
+    let exporter = opentelemetry_otlp::MetricExporter::builder().with_tonic().with_export_config(export_config).build();
 
     // Creates a periodic reader that exports every 5 seconds
     let reader = PeriodicReader::builder(exporter.expect("Failed to build metrics exporter"), runtime::Tokio)
@@ -128,15 +118,16 @@ pub fn init_metric_provider(otel_config: &OTELConfig) -> SdkMeterProvider {
     provider
 }
 
-fn init_logs(otel_config: &OTELConfig) -> Result<LoggerProvider, opentelemetry::logs::LogError> {
-    opentelemetry_otlp::new_pipeline()
-        .logging()
+fn init_logs(otel_config: &OTELConfig) -> Result<LoggerProvider, opentelemetry_sdk::logs::LogError> {
+    let exporter = LogExporter::builder().with_tonic().with_endpoint(otel_config.endpoint.to_string()).build()?;
+
+    Ok(LoggerProvider::builder()
         .with_resource(Resource::new(vec![KeyValue::new(
             opentelemetry_semantic_conventions::resource::SERVICE_NAME,
             format!("{}{}", otel_config.service_name, "_logs_service"),
         )]))
-        .with_exporter(opentelemetry_otlp::new_exporter().tonic().with_endpoint(otel_config.endpoint.to_string()))
-        .install_batch(runtime::Tokio)
+        .with_batch_exporter(exporter, runtime::Tokio)
+        .build())
 }
 
 #[cfg(test)]

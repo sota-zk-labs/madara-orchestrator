@@ -1,8 +1,10 @@
 #![allow(missing_docs)]
 #![allow(clippy::missing_docs_in_private_items)]
 
+use std::path::Path;
 use std::str::FromStr;
 
+use alloy::primitives::private::serde::{Deserialize, Serialize};
 use alloy::primitives::FixedBytes;
 use aptos_sdk::crypto::HashValue;
 use aptos_sdk::move_types::account_address::AccountAddress;
@@ -20,12 +22,20 @@ use da_client_interface::{DaClient, DaVerificationStatus};
 
 use crate::helper::build_transaction;
 
-pub mod config;
 pub mod helper;
 
 const STARKNET_VALIDITY: &str = "starknet_validity";
 const BLOB_SUBMISSION: &str = "blob_submission";
 const MAX_BLOB_PART_SIZE: usize = 32768;
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct AptosDaValidatedArgs {
+    pub node_url: String,
+    pub private_key: String,
+    pub module_address: String,
+    pub chain_id: String,
+    pub trusted_setup: String,
+}
 
 pub struct AptosDaClient {
     pub client: Client,
@@ -33,6 +43,19 @@ pub struct AptosDaClient {
     pub module_address: AccountAddress,
     pub chain_id: ChainId,
     pub trusted_setup: KzgSettings,
+}
+
+impl AptosDaClient {
+    pub async fn new_with_args(da_params: &AptosDaValidatedArgs) -> Self {
+        let client = Client::new(da_params.node_url.parse().unwrap());
+        let account = LocalAccount::from_private_key(&da_params.private_key, 0).unwrap();
+        let module_address = da_params.module_address.parse().expect("Invalid module address");
+        let chain_id = ChainId::from_str(&da_params.chain_id).expect("Invalid chain id");
+        let trusted_setup = KzgSettings::load_trusted_setup_file(Path::new(&da_params.trusted_setup))
+            .expect("Failed to load trusted setup");
+
+        Self { client, account, module_address, chain_id, trusted_setup }
+    }
 }
 
 #[async_trait]
@@ -113,7 +136,7 @@ impl DaClient for AptosDaClient {
         // Handle "wait for transaction" threads and combine the transaction hash
         let mut hashes_combined: String = "".to_string();
         for handle in results {
-            let hash: String = handle.await?.unwrap();
+            let hash: String = handle.await??;
             hashes_combined.push_str(&hash);
         }
 
@@ -138,7 +161,7 @@ impl DaClient for AptosDaClient {
             .collect::<Vec<_>>();
 
         for tx in txs {
-            let tx = tx.await?.unwrap();
+            let tx = tx.await??;
             if !tx.success() {
                 return Ok(DaVerificationStatus::Rejected(format!(
                     "Transaction {} failed",
@@ -194,10 +217,8 @@ mod test {
     use aptos_sdk::move_types::u256;
     use aptos_sdk::types::chain_id::NamedChain::TESTING;
     use aptos_testcontainer::test_utils::aptos_container_test_utils::{lazy_aptos_container, run};
-    use da_client_interface::DaConfig;
 
     use super::*;
-    use crate::config::AptosDaConfig;
 
     const INIT_CONTRACT_STATE: &str = "initialize_contract_state";
 
@@ -227,19 +248,20 @@ mod test {
         run(1, |accounts| {
             Box::pin(async move {
                 let aptos_container = lazy_aptos_container().await.unwrap();
-                let node_url = aptos_container.get_node_url().await.unwrap();
+                let node_url = aptos_container.get_node_url();
 
                 let module_account_private_key = accounts.first().unwrap();
                 let module_account = LocalAccount::from_private_key(module_account_private_key, 0).unwrap();
 
-                let config = AptosDaConfig {
+                let config = AptosDaValidatedArgs {
                     node_url,
                     private_key: module_account_private_key.to_string(),
                     module_address: module_account.address().to_string(),
                     chain_id: TESTING.id().to_string(),
                     trusted_setup: "./trusted_setup.txt".to_string(),
                 };
-                let da_client = config.build_client().await;
+
+                let da_client = AptosDaClient::new_with_args(&config).await;
 
                 let mut named_address = HashMap::new();
                 named_address.insert("starknet_addr".to_string(), module_account.address().to_string());
@@ -248,6 +270,7 @@ mod test {
                         "../../../ionia",
                         &module_account.private_key().to_encoded_string().unwrap(),
                         &named_address,
+                        None,
                         false,
                     )
                     .await
