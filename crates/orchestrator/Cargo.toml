@@ -12,6 +12,7 @@ name = "orchestrator"
 path = "src/main.rs"
 
 [dependencies]
+aptos-settlement-client = { workspace = true }
 alloy = { workspace = true }
 aptos-da-client = { workspace = true, optional = true }
 assert_matches = { workspace = true }

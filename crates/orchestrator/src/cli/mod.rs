@@ -62,7 +62,7 @@ pub enum Commands {
     ),
     group(
         ArgGroup::new("settlement_layer")
-            .args(&["settle_on_ethereum", "settle_on_starknet"])
+            .args(&["settle_on_ethereum", "settle_on_starknet", "settle_on_aptos"])
             .required(true)
             .multiple(false)
     ),
@@ -95,7 +95,7 @@ pub enum Commands {
     ),
     group(
         ArgGroup::new("da_layer")
-            .args(&["da_on_ethereum"])
+            .args(&["da_on_ethereum", "da_on_aptos"])
             .required(true)
             .multiple(false)
     ),
@@ -111,6 +111,9 @@ pub struct RunCmd {
 
     #[clap(flatten)]
     starknet_args: settlement::starknet::StarknetSettlementCliArgs,
+
+    #[clap(flatten)]
+    aptos_args: settlement::aptos::AptosSettlementCliArgs,
 
     // Storage
     #[clap(flatten)]
@@ -135,6 +138,9 @@ pub struct RunCmd {
     // Data Availability Layer
     #[clap(flatten)]
     pub ethereum_da_args: da::ethereum::EthereumDaCliArgs,
+    
+    #[clap(flatten)]
+    pub aptos_da_args: da::aptos::AptosDaCliArgs,
 
     // Prover
     #[clap(flatten)]
@@ -182,11 +188,11 @@ impl RunCmd {
     }
 
     pub fn validate_da_params(&self) -> Result<DaValidatedArgs, String> {
-        validate_params::validate_da_params(&self.ethereum_da_args)
+        validate_params::validate_da_params(&self.ethereum_da_args, &self.aptos_da_args)
     }
 
     pub fn validate_settlement_params(&self) -> Result<settlement::SettlementValidatedArgs, String> {
-        validate_params::validate_settlement_params(&self.ethereum_args, &self.starknet_args)
+        validate_params::validate_settlement_params(&self.ethereum_args, &self.starknet_args, &self.aptos_args)
     }
 
     pub fn validate_prover_params(&self) -> Result<ProverValidatedArgs, String> {
@@ -308,7 +314,8 @@ pub mod validate_params {
     use sharp_service::SharpValidatedArgs;
     use starknet_settlement_client::StarknetSettlementValidatedArgs;
     use url::Url;
-
+    use aptos_da_client::AptosDaValidatedArgs;
+    use aptos_settlement_client::AptosSettlementValidatedArgs;
     use super::alert::aws_sns::AWSSNSCliArgs;
     use super::alert::AlertValidatedArgs;
     use super::cron::event_bridge::AWSEventBridgeCliArgs;
@@ -334,7 +341,9 @@ pub mod validate_params {
     use super::storage::aws_s3::AWSS3CliArgs;
     use super::storage::StorageValidatedArgs;
     use crate::alerts::aws_sns::AWSSNSValidatedArgs;
+    use crate::cli::da::aptos::AptosDaCliArgs;
     use crate::cli::prover_layout::ProverLayoutCliArgs;
+    use crate::cli::settlement::aptos::AptosSettlementCliArgs;
     use crate::config::ServiceParams;
     use crate::cron::event_bridge::AWSEventBridgeValidatedArgs;
     use crate::data_storage::aws_s3::AWSS3ValidatedArgs;
@@ -451,7 +460,7 @@ pub mod validate_params {
         }
     }
 
-    pub(crate) fn validate_da_params(ethereum_da_args: &EthereumDaCliArgs) -> Result<DaValidatedArgs, String> {
+    pub(crate) fn validate_da_params(ethereum_da_args: &EthereumDaCliArgs, aptos_da_args: &AptosDaCliArgs) -> Result<DaValidatedArgs, String> {
         if ethereum_da_args.da_on_ethereum {
             Ok(DaValidatedArgs::Ethereum(EthereumDaValidatedArgs {
                 ethereum_da_rpc_url: ethereum_da_args
@@ -459,18 +468,29 @@ pub mod validate_params {
                     .clone()
                     .expect("Ethereum DA RPC URL is required"),
             }))
-        } else {
-            Err("Only Ethereum is supported as of now".to_string())
+        } else if aptos_da_args.da_on_aptos  {
+            Ok(DaValidatedArgs::Aptos(AptosDaValidatedArgs {
+                node_url: aptos_da_args.da_aptos_node_url.clone().expect("Aptos node URL is required"),
+                private_key: aptos_da_args.da_aptos_private_key.clone().expect("Aptos private key is required"),
+                module_address: aptos_da_args.da_aptos_module_address.clone().expect("Aptos module address is required"),
+                chain_id: aptos_da_args.da_aptos_chain_id.clone().expect("Aptos chain ID is required"),
+                trusted_setup: aptos_da_args.da_aptos_trusted_setup.clone().expect("Aptos trusted setup is required"),
+            }))
+        } 
+        
+        else {
+            Err("Only Ethereum and Aptos are supported as of now".to_string())
         }
     }
 
     pub(crate) fn validate_settlement_params(
         ethereum_args: &EthereumSettlementCliArgs,
         starknet_args: &StarknetSettlementCliArgs,
+        aptos_args: &AptosSettlementCliArgs,
     ) -> Result<SettlementValidatedArgs, String> {
-        match (ethereum_args.settle_on_ethereum, starknet_args.settle_on_starknet) {
-            (true, true) => Err("Cannot settle on both Ethereum and Starknet".to_string()),
-            (true, false) => {
+        match (ethereum_args.settle_on_ethereum, starknet_args.settle_on_starknet, aptos_args.settle_on_aptos) {
+            (true, true, true) => Err("Cannot settle on both Ethereum and Starknet".to_string()),
+            (true, false, false) => {
                 let l1_core_contract_address = Address::from_str(
                     &ethereum_args.l1_core_contract_address.clone().expect("L1 core contract address is required"),
                 )
@@ -491,7 +511,7 @@ pub mod validate_params {
                 };
                 Ok(SettlementValidatedArgs::Ethereum(ethereum_params))
             }
-            (false, true) => {
+            (false, true, false) => {
                 let starknet_params = StarknetSettlementValidatedArgs {
                     starknet_rpc_url: starknet_args.starknet_rpc_url.clone().expect("Starknet RPC URL is required"),
                     starknet_private_key: starknet_args
@@ -512,7 +532,17 @@ pub mod validate_params {
                 };
                 Ok(SettlementValidatedArgs::Starknet(starknet_params))
             }
-            (false, false) => Err("Settlement layer is required".to_string()),
+            (false, false, true) => {
+                let aptos_params = AptosSettlementValidatedArgs {
+                    node_url: aptos_args.aptos_node_url.clone().expect("Aptos node URL is required"),
+                    private_key: aptos_args.aptos_private_key.clone().expect("Aptos private key is required"),
+                    module_address: aptos_args.aptos_module_address.clone().expect("Aptos module address is required"),
+                    chain_id: aptos_args.aptos_chain_id.clone().expect("Aptos chain ID is required"),
+                };
+                Ok(SettlementValidatedArgs::Aptos(aptos_params))
+            }
+            (false, false, false) => Err("Settlement layer is required".to_string()),
+            _ => {Err("Settlement layer is disabled".to_string())}
         }
     }
 

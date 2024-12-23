@@ -10349,6 +10349,7 @@ version = "0.1.0"
 dependencies = [
  "alloy 0.2.1",
  "aptos-da-client",
+ "aptos-settlement-client",
  "assert_matches",
  "async-std",
  "async-trait",

@@ -18,6 +18,7 @@ use settlement_client_interface::SettlementClient;
 use sharp_service::SharpProverService;
 use starknet::providers::jsonrpc::HttpTransport;
 use starknet::providers::{JsonRpcClient, Url};
+use aptos_settlement_client::AptosSettlementClient;
 use starknet_settlement_client::StarknetSettlementClient;
 
 use crate::alerts::aws_sns::AWSSNS;
@@ -32,6 +33,7 @@ use crate::cli::settlement::SettlementValidatedArgs;
 use crate::cli::snos::SNOSParams;
 use crate::cli::storage::StorageValidatedArgs;
 use crate::cli::RunCmd;
+use crate::cli::settlement::aptos::AptosSettlementCliArgs;
 use crate::data_storage::aws_s3::AWSS3;
 use crate::data_storage::DataStorage;
 use crate::database::mongodb::MongoDb;
@@ -325,6 +327,9 @@ pub async fn build_settlement_client(
         }
         SettlementValidatedArgs::Starknet(starknet_settlement_params) => {
             Ok(Box::new(StarknetSettlementClient::new_with_args(starknet_settlement_params).await))
+        }
+        SettlementValidatedArgs::Aptos(aptos_settlement_params) => {
+            Ok(Box::new(AptosSettlementClient::new_with_args(aptos_settlement_params)))
         }
     }
 }
